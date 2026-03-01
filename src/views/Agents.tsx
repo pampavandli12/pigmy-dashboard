@@ -5,9 +5,16 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router";
+import { useEffect } from "react";
+import { fetchAgents } from "../services/agents";
 
 function Agents() {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
   const agentsData = [
     {
       name: "CHANNABASAVA H",
@@ -40,7 +47,7 @@ function Agents() {
       color: "#F2D9F2",
     },
   ];
-
+  console.log("hi");
   const getStatusColor = (status: string) => {
     if (status === "Yes") return "#ff6b6b";
     if (status === "No") return "#ff6b6b";

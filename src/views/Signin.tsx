@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -7,23 +6,37 @@ import {
   Link,
   Paper,
   CssBaseline,
+  Alert,
 } from "@mui/material";
 import { login } from "../services/login";
 
-function Signin() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [bankCode, setBankCode] = useState("");
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginFormValues } from "../utils/formSchemas";
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+function Signin() {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange", // better UX
+  });
+  const onSubmit = async (data: LoginFormValues) => {
+    console.log(data);
     // Handle login logic here
-    console.log("Login attempted with:", { bankCode, username, password });
+    console.log("Login attempted with:", data);
     try {
-      const respose = await login({ bankCode, userName: username, password });
+      const respose = await login(data);
       console.log("Login successful:", respose);
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Login failed:", JSON.stringify(error));
+      setError("root", {
+        type: "manual",
+        message: "Login failed. Please check your credentials.",
+      });
     }
   };
 
@@ -86,7 +99,7 @@ function Signin() {
             borderRadius: "12px",
           }}
         >
-          <Box component="form" onSubmit={handleLogin} noValidate>
+          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Bank Code Field */}
             <Box sx={{ marginBottom: 2.5 }}>
               <Typography
@@ -99,19 +112,27 @@ function Signin() {
               >
                 Bank Code
               </Typography>
-              <TextField
-                fullWidth
-                placeholder="Enter bank code"
-                value={bankCode}
-                onChange={(e) => setBankCode(e.target.value)}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                    backgroundColor: "#ffffff",
-                  },
-                }}
+
+              <Controller
+                name="bankCode"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    placeholder="Enter bank code"
+                    error={!!errors.bankCode}
+                    helperText={errors.bankCode?.message}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                        backgroundColor: "#ffffff",
+                      },
+                    }}
+                  />
+                )}
               />
             </Box>
 
@@ -127,19 +148,26 @@ function Signin() {
               >
                 Username
               </Typography>
-              <TextField
-                fullWidth
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                    backgroundColor: "#ffffff",
-                  },
-                }}
+              <Controller
+                name="userName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    placeholder="Enter your username"
+                    {...field}
+                    variant="outlined"
+                    error={!!errors.userName}
+                    helperText={errors.userName?.message}
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                        backgroundColor: "#ffffff",
+                      },
+                    }}
+                  />
+                )}
               />
             </Box>
 
@@ -155,20 +183,27 @@ function Signin() {
               >
                 Password
               </Typography>
-              <TextField
-                fullWidth
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                    backgroundColor: "#ffffff",
-                  },
-                }}
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    type="password"
+                    placeholder="Enter your password"
+                    error={!!errors.password}
+                    helperText={errors.password?.message}
+                    {...field}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                        backgroundColor: "#ffffff",
+                      },
+                    }}
+                  />
+                )}
               />
             </Box>
 
@@ -177,6 +212,7 @@ function Signin() {
               type="submit"
               fullWidth
               variant="contained"
+              disabled={isSubmitting}
               sx={{
                 backgroundColor: "#1976d2",
                 color: "#ffffff",
@@ -193,6 +229,11 @@ function Signin() {
             >
               Login
             </Button>
+            {errors.root && (
+              <Alert sx={{ marginBottom: 2 }} severity="warning">
+                {errors.root.message}
+              </Alert>
+            )}
 
             {/* Forgot Password Link */}
             <Box sx={{ textAlign: "center" }}>

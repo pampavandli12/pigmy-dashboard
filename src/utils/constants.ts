@@ -9,8 +9,9 @@ type Environment = "development" | "staging" | "production";
 const getConfig = (env: Environment): AppConfig => {
   const configs: Record<Environment, AppConfig> = {
     development: {
-      apiDomain:
-        "https://uncontrastively-nondyspeptical-mabelle.ngrok-free.dev",
+      // apiDomain:
+      //   "https://uncontrastively-nondyspeptical-mabelle.ngrok-free.dev",
+      apiDomain: "http://localhost:1002",
       apiTimeout: 30000,
       logLevel: "debug",
     },
@@ -30,3 +31,8 @@ const getConfig = (env: Environment): AppConfig => {
 };
 
 export const appConfig = getConfig("development");
+
+export const API_URLS = {
+  LOGIN: "/pigmy/v1/login",
+  FETCH_AGENTS: "/pigmy/v1/agent",
+};
