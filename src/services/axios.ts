@@ -27,6 +27,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response && error.response.status === 403) {
+      console.warn("Unauthorized! Redirecting to login.");
+      window.location.href = "/signin";
+    }
     console.error("API Error:", error);
     return Promise.reject(error);
   },
