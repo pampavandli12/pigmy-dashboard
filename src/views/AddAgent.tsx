@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -35,7 +35,7 @@ function AddAgent() {
     let password = "";
     for (let i = 0; i < 15; i++) {
       password += characters.charAt(
-        Math.floor(Math.random() * characters.length)
+        Math.floor(Math.random() * characters.length),
       );
     }
     setFormData((prev) => ({

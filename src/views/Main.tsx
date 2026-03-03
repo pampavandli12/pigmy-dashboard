@@ -10,16 +10,24 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import SideDrawer from "../components/SideDrawer";
 import Container from "@mui/material/Container";
 // Drawer icons moved into SideDrawer component
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/AuthStore";
 
 const DRAWER_WIDTH = 250;
 const DRAWER_COLLAPSED_WIDTH = 70;
 
 function Main() {
   const [drawerExpanded, setDrawerExpanded] = useState(true);
+  const bankName = useAuthStore((state) => state.bankName);
+  const navigation = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
 
   const toggleDrawer = () => {
     setDrawerExpanded(!drawerExpanded);
+  };
+  const handleLogout = () => {
+    logout();
+    navigation("/signin", { replace: true });
   };
 
   // drawer content moved to SideDrawer component
@@ -54,9 +62,11 @@ function Main() {
             {drawerExpanded ? <ChevronLeftIcon /> : <MenuIcon />}
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Bank Admin Portal
+            {bankName || "Pigmy Dashboard"}
           </Typography>
-          <Button color="inherit">Logout</Button>
+          <Button color="inherit" onClick={handleLogout}>
+            Logout
+          </Button>
         </Toolbar>
       </AppBar>
 

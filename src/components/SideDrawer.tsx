@@ -9,7 +9,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import { NavLink } from "react-router";
+import { NavLink } from "react-router-dom";
 import type { Theme } from "@mui/material/styles";
 
 const DRAWER_WIDTH = 250;
@@ -22,9 +22,9 @@ type Props = {
 export default function SideDrawer({ drawerExpanded }: Props) {
   const menuItems = [
     { label: "Dashboard", icon: <DashboardIcon />, path: "/" },
-    { label: "Agents", icon: <PersonIcon />, path: "/agents" },
-    { label: "Accounts", icon: <CollectionsIcon />, path: "/accounts" },
-    { label: "Reports", icon: <AssessmentIcon />, path: "/reports" },
+    { label: "Agents", icon: <PersonIcon />, path: "agents" },
+    { label: "Accounts", icon: <CollectionsIcon />, path: "accounts" },
+    { label: "Reports", icon: <AssessmentIcon />, path: "reports" },
   ];
 
   const drawerContent = (

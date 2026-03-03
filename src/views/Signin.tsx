@@ -14,6 +14,9 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormValues } from "../utils/formSchemas";
 
+import { useAuthStore } from "../store/AuthStore";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+
 function Signin() {
   const {
     control,
@@ -24,13 +27,22 @@ function Signin() {
     resolver: zodResolver(loginSchema),
     mode: "onChange", // better UX
   });
+  const authStore = useAuthStore();
+  const navigate = useNavigate();
+  const token = authStore.token;
+  const location = useLocation(); // useLocation() can also be used if needed
+
   const onSubmit = async (data: LoginFormValues) => {
     console.log(data);
     // Handle login logic here
     console.log("Login attempted with:", data);
     try {
       const respose = await login(data);
-      console.log("Login successful:", respose);
+      authStore.setToken(respose.token);
+      authStore.setBankName(respose.bankName);
+      authStore.setBankCode(respose.bankCode);
+      console.log("Login successful, navigating to dashboard...", respose);
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Login failed:", JSON.stringify(error));
       setError("root", {
@@ -39,7 +51,11 @@ function Signin() {
       });
     }
   };
-
+  // 🟢 If already logged in → redirect
+  if (token) {
+    const redirectTo = location.state?.from?.pathname ?? "/";
+    return <Navigate to={redirectTo} replace />;
+  }
   return (
     <>
       <CssBaseline />

@@ -4,7 +4,7 @@ import SwapCallsIcon from "@mui/icons-material/SwapCalls";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { fetchAgents } from "../services/agents";
 
