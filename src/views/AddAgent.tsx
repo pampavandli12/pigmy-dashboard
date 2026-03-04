@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -7,41 +6,47 @@ import {
   Button,
   Paper,
   IconButton,
+  FormControl,
+  Select,
+  MenuItem,
+  FormHelperText,
+  Alert,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import AddIcon from "@mui/icons-material/Add";
 import Container from "@mui/material/Container";
+import { useForm, Controller } from "react-hook-form";
+import { addAgentSchema, type AddAgentFormValues } from "../utils/formSchemas";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAgentStore } from "../store/AgentStore";
 
 function AddAgent() {
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    city: "",
-    password: "aBcD1eFgH2iJkL3",
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<AddAgentFormValues>({
+    resolver: zodResolver(addAgentSchema),
+    mode: "onChange", // better UX
   });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
+  const createAgent = useAgentStore((state) => state.createAgent);
   const handleGeneratePassword = () => {
-    const characters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let password = "";
-    for (let i = 0; i < 15; i++) {
-      password += characters.charAt(
-        Math.floor(Math.random() * characters.length),
-      );
-    }
-    setFormData((prev) => ({
-      ...prev,
-      password,
-    }));
+    // TODO: will have to revisit
+    // const characters =
+    //   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    // let password = "";
+    // for (let i = 0; i < 15; i++) {
+    //   password += characters.charAt(
+    //     Math.floor(Math.random() * characters.length),
+    //   );
+    // }
+    // Set generated password in form state
+    // setFormData((prev) => ({
+    //   ...prev,
+    //   password,
+    // }));
   };
 
   const handleCancel = () => {
@@ -49,9 +54,18 @@ function AddAgent() {
     console.log("Cancel clicked");
   };
 
-  const handleCreateAgent = () => {
+  const onSubmit = async (data: AddAgentFormValues) => {
     // Handle create agent action
-    console.log("Create agent with:", formData);
+    console.log("Create agent with:", data);
+    try {
+      await createAgent(data);
+    } catch (error) {
+      console.error("Login failed:", JSON.stringify(error));
+      setError("root", {
+        type: "manual",
+        message: "Failed to create agent, please try again.",
+      });
+    }
   };
 
   const navigate = useNavigate();
@@ -116,6 +130,7 @@ function AddAgent() {
         >
           <Box
             component="form"
+            onSubmit={handleSubmit(onSubmit)}
             noValidate
             sx={{ display: "flex", flexDirection: "column", gap: 3 }}
           >
@@ -131,19 +146,26 @@ function AddAgent() {
               >
                 Name
               </Typography>
-              <TextField
-                fullWidth
+              <Controller
                 name="name"
-                placeholder="e.g., John Doe"
-                value={formData.name}
-                onChange={handleInputChange}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    {...field}
+                    name="name"
+                    placeholder="e.g., John Doe"
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                      },
+                    }}
+                  />
+                )}
               />
             </Box>
 
@@ -159,23 +181,31 @@ function AddAgent() {
               >
                 Phone
               </Typography>
-              <TextField
-                fullWidth
+              <Controller
                 name="phone"
-                placeholder="e.g., 555-123-4567"
-                value={formData.phone}
-                onChange={handleInputChange}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    {...field}
+                    name="phone"
+                    type="number"
+                    placeholder="Enter phone number"
+                    error={!!errors.phone}
+                    helperText={errors.phone?.message}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                      },
+                    }}
+                  />
+                )}
               />
             </Box>
 
-            {/* City Field */}
+            {/* address Field */}
             <Box>
               <Typography
                 sx={{
@@ -185,21 +215,28 @@ function AddAgent() {
                   mb: 1,
                 }}
               >
-                City
+                Address
               </Typography>
-              <TextField
-                fullWidth
-                name="city"
-                placeholder="e.g., New York"
-                value={formData.city}
-                onChange={handleInputChange}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+              <Controller
+                name="address"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    {...field}
+                    name="address"
+                    placeholder="Enter Address"
+                    error={!!errors.phone}
+                    helperText={errors.phone?.message}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                      },
+                    }}
+                  />
+                )}
               />
             </Box>
 
@@ -216,18 +253,27 @@ function AddAgent() {
                 Password
               </Typography>
               <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                <TextField
+                <Controller
                   name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  variant="outlined"
-                  size="medium"
-                  sx={{
-                    flex: 1,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "6px",
-                    },
-                  }}
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      name="password"
+                      type="password"
+                      placeholder="Enter Password"
+                      error={!!errors.phone}
+                      helperText={errors.phone?.message}
+                      variant="outlined"
+                      size="medium"
+                      sx={{
+                        flex: 1,
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "6px",
+                        },
+                      }}
+                    />
+                  )}
                 />
                 <Button
                   onClick={handleGeneratePassword}
@@ -258,6 +304,162 @@ function AddAgent() {
               </Typography>
             </Box>
 
+            {/* Email Field */}
+
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "#333333",
+                  mb: 1,
+                }}
+              >
+                Email
+              </Typography>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    {...field}
+                    name="email"
+                    placeholder="Enter Email"
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Box>
+
+            {/* Agent Code */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "#333333",
+                  mb: 1,
+                }}
+              >
+                Agent Code
+              </Typography>
+              <Controller
+                name="agentCode"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    {...field}
+                    name="agentCode"
+                    type="number"
+                    placeholder="Enter Agent Code"
+                    error={!!errors.agentCode}
+                    helperText={errors.agentCode?.message}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Box>
+            {/* Agent Type */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "#333333",
+                  mb: 1,
+                }}
+              >
+                Agent Type
+              </Typography>
+
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.type}>
+                    <Select
+                      {...field}
+                      displayEmpty
+                      size="medium"
+                      sx={{
+                        borderRadius: "6px",
+                      }}
+                      renderValue={(selected) => {
+                        if (!selected) {
+                          return (
+                            <span style={{ color: "#9e9e9e" }}>
+                              Select Type
+                            </span>
+                          );
+                        }
+                        return (
+                          selected.charAt(0).toUpperCase() + selected.slice(1)
+                        );
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Select Type
+                      </MenuItem>
+
+                      <MenuItem value="agent">agent</MenuItem>
+                      <MenuItem value="subagent">employee</MenuItem>
+                    </Select>
+
+                    <FormHelperText>{errors.type?.message}</FormHelperText>
+                  </FormControl>
+                )}
+              />
+            </Box>
+            {/* Limit Amount */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "#333333",
+                  mb: 1,
+                }}
+              >
+                Limit Amount
+              </Typography>
+              <Controller
+                name="limitAmount"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    {...field}
+                    name="limitAmount"
+                    placeholder="Enter Limit Amount"
+                    error={!!errors.limitAmount}
+                    helperText={errors.limitAmount?.message}
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "6px",
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Box>
             {/* Action Buttons */}
             <Box
               sx={{
@@ -288,8 +490,9 @@ function AddAgent() {
               </Button>
               <Button
                 variant="contained"
-                onClick={handleCreateAgent}
+                type="submit"
                 startIcon={<AddIcon />}
+                disabled={isSubmitting}
                 sx={{
                   backgroundColor: "#1976d2",
                   color: "#ffffff",
@@ -305,6 +508,11 @@ function AddAgent() {
               >
                 Create Agent
               </Button>
+              {errors.root && (
+                <Alert sx={{ marginBottom: 2 }} severity="warning">
+                  {errors.root.message}
+                </Alert>
+              )}
             </Box>
           </Box>
         </Paper>

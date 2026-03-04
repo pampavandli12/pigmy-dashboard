@@ -6,54 +6,29 @@ import LockResetIcon from "@mui/icons-material/LockReset";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { fetchAgents } from "../services/agents";
+import { useAgentStore } from "../store/AgentStore";
 
 function Agents() {
   const navigate = useNavigate();
-
+  const fetchAgents = useAgentStore((state) => state.fetchAgents);
+  const agents = useAgentStore((state) => state.agents);
+  console.log("agents", agents);
   useEffect(() => {
     fetchAgents();
-  }, []);
+  }, [fetchAgents]);
 
-  const agentsData = [
-    {
-      name: "CHANNABASAVA H",
-      agentNo: "02",
-      address: "S/O Basavanna Gowda Ward no 1...",
-      mobileStatus: "Registered",
-      blockStatus: "No",
-      agentLimit: "₹50,000",
-      initials: "C",
-      color: "#B3D9F2",
-    },
-    {
-      name: "ANITHA",
-      agentNo: "03",
-      address: "D/O Venkatarama Ward no 4...",
-      mobileStatus: "Registered",
-      blockStatus: "Yes",
-      agentLimit: "₹75,000",
-      initials: "A",
-      color: "#B3F2D9",
-    },
-    {
-      name: "SURESH B",
-      agentNo: "04",
-      address: "S/O Basappa Gowda Ward no 8...",
-      mobileStatus: "Unregistered",
-      blockStatus: "No",
-      agentLimit: "₹25,000",
-      initials: "S",
-      color: "#F2D9F2",
-    },
-  ];
   console.log("hi");
-  const getStatusColor = (status: string) => {
-    if (status === "Yes") return "#ff6b6b";
-    if (status === "No") return "#ff6b6b";
-    if (status === "Registered") return "#212121";
-    if (status === "Unregistered") return "#999999";
-    return "#666666";
+  // const getStatusColor = (status: string) => {
+  //   if (status === "Yes") return "#ff6b6b";
+  //   if (status === "No") return "#ff6b6b";
+  //   if (status === "Registered") return "#212121";
+  //   if (status === "Unregistered") return "#999999";
+  //   return "#666666";
+  // };
+  const agentInitial = (name: string) => {
+    const parts = name.split(" ");
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return parts[0].charAt(0).toUpperCase() + parts[1].charAt(0).toUpperCase();
   };
   const addAgent = () => {
     // Logic to navigate to Add Agent page
@@ -114,7 +89,7 @@ function Agents() {
           gap: 3,
         }}
       >
-        {agentsData.map((agent, index) => (
+        {agents.map((agent, index) => (
           <Card
             key={index}
             elevation={1}
@@ -137,13 +112,13 @@ function Agents() {
                   sx={{
                     width: 48,
                     height: 48,
-                    backgroundColor: agent.color,
+                    backgroundColor: "#B3D9F2",
                     color: "#333333",
                     fontWeight: 700,
                     fontSize: "20px",
                   }}
                 >
-                  {agent.initials}
+                  {agentInitial(agent.name)}
                 </Avatar>
                 <Box>
                   <Typography
@@ -162,7 +137,7 @@ function Agents() {
                       fontWeight: 600,
                     }}
                   >
-                    AGENT NO: {agent.agentNo}
+                    AGENT NO: {agent.agentCode}
                   </Typography>
                   <Typography
                     sx={{
@@ -201,7 +176,7 @@ function Agents() {
                   Mobile Status
                 </Typography>
                 <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>
-                  {agent.mobileStatus}
+                  Registered
                 </Typography>
               </Box>
               <Box>
@@ -216,7 +191,7 @@ function Agents() {
                 >
                   Block Status
                 </Typography>
-                <Typography
+                {/* <Typography
                   sx={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -224,7 +199,7 @@ function Agents() {
                   }}
                 >
                   {agent.blockStatus}
-                </Typography>
+                </Typography> */}
               </Box>
               <Box>
                 <Typography
@@ -239,7 +214,7 @@ function Agents() {
                   Agent Limit
                 </Typography>
                 <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>
-                  {agent.agentLimit}
+                  {agent.limitAmount}
                 </Typography>
               </Box>
             </Box>
