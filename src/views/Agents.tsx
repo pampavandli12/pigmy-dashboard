@@ -7,17 +7,21 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAgentStore } from "../store/AgentStore";
+import LoadingComponent from "../components/LoadingComponent";
+import { Status } from "../types/sharedEnums";
 
 function Agents() {
   const navigate = useNavigate();
   const fetchAgents = useAgentStore((state) => state.fetchAgents);
   const agents = useAgentStore((state) => state.agents);
-  console.log("agents", agents);
+  const fetchAgentLoadingStatus = useAgentStore(
+    (state) => state.fetchAgentLoadingStatus,
+  );
+
   useEffect(() => {
     fetchAgents();
   }, [fetchAgents]);
 
-  console.log("hi");
   // const getStatusColor = (status: string) => {
   //   if (status === "Yes") return "#ff6b6b";
   //   if (status === "No") return "#ff6b6b";
@@ -35,6 +39,15 @@ function Agents() {
     console.log("Navigate to Add Agent page");
     navigate("/agents/addAgent");
   };
+  const handleEditAgent = async (agentCode: string) => {
+    console.log("Navigate to Edit Agent page for agent code:", agentCode);
+    navigate(`/agents/editAgent/${agentCode}`);
+  };
+
+  // Show loading state while fetching agents
+  if (fetchAgentLoadingStatus === Status.Loading) {
+    return <LoadingComponent />;
+  }
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -120,7 +133,7 @@ function Agents() {
                 >
                   {agentInitial(agent.name)}
                 </Avatar>
-                <Box>
+                <Box sx={{ flex: "auto" }}>
                   <Typography
                     sx={{
                       fontWeight: 700,
@@ -292,6 +305,14 @@ function Agents() {
                 Deregister
               </Button>
             </Box>
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ mt: 2 }}
+              onClick={() => handleEditAgent(agent.agentCode)}
+            >
+              Edit Agent
+            </Button>
           </Card>
         ))}
       </Box>

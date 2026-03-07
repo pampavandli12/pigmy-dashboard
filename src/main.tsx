@@ -9,11 +9,14 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
 import App from "./App.tsx";
+import AlertProvider from "./providers/AlertProvider.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <AlertProvider>
+        <App />
+      </AlertProvider>
     </BrowserRouter>
   </StrictMode>,
 );

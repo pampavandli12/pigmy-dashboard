@@ -4,9 +4,10 @@ import Signin from "./views/Signin";
 import Dashboard from "./views/Dashboard";
 import Agents from "./views/Agents";
 import AgentView from "./views/AgentView";
-import AddAgent from "./views/AddAgent";
 import AccountsView from "./views/AccountsView";
-import { ProtectedRoute } from "./providers/ProtectedRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
+import CreateAgent from "./views/CreateAgent";
+import UpdateAgents from "./views/UpdateAgents";
 
 function App() {
   return (
@@ -21,7 +22,8 @@ function App() {
 
           <Route path="agents" element={<AgentView />}>
             <Route index element={<Agents />} />
-            <Route path="addAgent" element={<AddAgent />} />
+            <Route path="addAgent" element={<CreateAgent />} />
+            <Route path="editAgent/:agentCode" element={<UpdateAgents />} />
           </Route>
 
           <Route path="accounts" element={<AccountsView />} />

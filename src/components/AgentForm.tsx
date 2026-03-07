@@ -14,24 +14,40 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import AddIcon from "@mui/icons-material/Add";
+import SaveIcon from "@mui/icons-material/Save";
 import Container from "@mui/material/Container";
 import { useForm, Controller } from "react-hook-form";
 import { addAgentSchema, type AddAgentFormValues } from "../utils/formSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAgentStore } from "../store/AgentStore";
+import { useEffect } from "react";
 
-function AddAgent() {
+type AgentFormProps = {
+  defaultValues?: AddAgentFormValues | null;
+  callback: (data: AddAgentFormValues) => void;
+  isUpdate?: boolean;
+};
+
+function AddAgent({
+  defaultValues = null,
+  callback,
+  isUpdate,
+}: AgentFormProps) {
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setError,
+    reset,
   } = useForm<AddAgentFormValues>({
     resolver: zodResolver(addAgentSchema),
     mode: "onChange", // better UX
   });
-  const createAgent = useAgentStore((state) => state.createAgent);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (defaultValues) {
+      reset(defaultValues);
+    }
+  }, [defaultValues, reset]);
   const handleGeneratePassword = () => {
     // TODO: will have to revisit
     // const characters =
@@ -51,24 +67,8 @@ function AddAgent() {
 
   const handleCancel = () => {
     // Handle cancel action
-    console.log("Cancel clicked");
+    navigate(-1); // Go back to previous page
   };
-
-  const onSubmit = async (data: AddAgentFormValues) => {
-    // Handle create agent action
-    console.log("Create agent with:", data);
-    try {
-      await createAgent(data);
-    } catch (error) {
-      console.error("Login failed:", JSON.stringify(error));
-      setError("root", {
-        type: "manual",
-        message: "Failed to create agent, please try again.",
-      });
-    }
-  };
-
-  const navigate = useNavigate();
 
   return (
     <Container
@@ -130,7 +130,7 @@ function AddAgent() {
         >
           <Box
             component="form"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(callback)}
             noValidate
             sx={{ display: "flex", flexDirection: "column", gap: 3 }}
           >
@@ -355,6 +355,7 @@ function AddAgent() {
               <Controller
                 name="agentCode"
                 control={control}
+                disabled={isUpdate} // Disable agent code input during update
                 render={({ field }) => (
                   <TextField
                     fullWidth
@@ -395,7 +396,9 @@ function AddAgent() {
                   <FormControl fullWidth error={!!errors.type}>
                     <Select
                       {...field}
+                      value={field.value || ""}
                       displayEmpty
+                      readOnly={isUpdate} // Disable type selection during update
                       size="medium"
                       sx={{
                         borderRadius: "6px",
@@ -418,7 +421,7 @@ function AddAgent() {
                       </MenuItem>
 
                       <MenuItem value="agent">agent</MenuItem>
-                      <MenuItem value="subagent">employee</MenuItem>
+                      <MenuItem value="employee">employee</MenuItem>
                     </Select>
 
                     <FormHelperText>{errors.type?.message}</FormHelperText>
@@ -491,7 +494,7 @@ function AddAgent() {
               <Button
                 variant="contained"
                 type="submit"
-                startIcon={<AddIcon />}
+                startIcon={<SaveIcon />}
                 disabled={isSubmitting}
                 sx={{
                   backgroundColor: "#1976d2",
@@ -506,7 +509,7 @@ function AddAgent() {
                   },
                 }}
               >
-                Create Agent
+                Save
               </Button>
               {errors.root && (
                 <Alert sx={{ marginBottom: 2 }} severity="warning">
