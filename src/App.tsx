@@ -8,6 +8,7 @@ import AccountsView from "./views/AccountsView";
 import { ProtectedRoute } from "./ProtectedRoute";
 import CreateAgent from "./views/CreateAgent";
 import UpdateAgents from "./views/UpdateAgents";
+import Transactions from "./views/Transactions";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route index element={<Agents />} />
             <Route path="addAgent" element={<CreateAgent />} />
             <Route path="editAgent/:agentCode" element={<UpdateAgents />} />
+            <Route path="transactions/:agentCode" element={<Transactions />} />
           </Route>
 
           <Route path="accounts" element={<AccountsView />} />

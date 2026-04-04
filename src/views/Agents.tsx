@@ -39,9 +39,14 @@ function Agents() {
     console.log("Navigate to Add Agent page");
     navigate("/agents/addAgent");
   };
-  const handleEditAgent = async (agentCode: string) => {
+  const handleEditAgent = async (agentCode: number) => {
     console.log("Navigate to Edit Agent page for agent code:", agentCode);
     navigate(`/agents/editAgent/${agentCode}`);
+  };
+
+  const loadTransactions = (agentCode: number) => {
+    console.log("redirect to transactions page");
+    navigate(`/agents/transactions/${agentCode}`);
   };
 
   // Show loading state while fetching agents
@@ -96,8 +101,9 @@ function Agents() {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(3, 1fr)",
+            sm: "repeat(1, 1fr)",
+            md: "repeat(2, 1fr)",
+            lg: "repeat(3, 1fr)",
           },
           gap: 3,
         }}
@@ -243,6 +249,7 @@ function Agents() {
               <Button
                 variant="text"
                 startIcon={<SwapCallsIcon />}
+                onClick={() => loadTransactions(agent.agentCode)}
                 sx={{
                   fontSize: "13px",
                   fontWeight: 600,
