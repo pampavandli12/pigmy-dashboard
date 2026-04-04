@@ -91,15 +91,26 @@ export const useAgentStore = create<State & Action>((set) => ({
   },
   fetchTransactions: async (agentCode: number, date: string) => {
     set({ fetchTransactionsLoadingStatus: Status.Loading, transactions: [] });
+    const alertStore = useAlertStore.getState();
     try {
       const transactions = await fetchTransactions(agentCode, date);
       set({
         transactions,
         fetchTransactionsLoadingStatus: Status.Success,
       });
+      alertStore.showAlert(
+        true,
+        "Transactions fetched successfully.",
+        Severity.Success,
+      );
     } catch (error) {
       console.error("Failed to fetch transactions:", error);
       set({ fetchTransactionsLoadingStatus: Status.Error });
+      alertStore.showAlert(
+        true,
+        "Failed to fetch transactions. Please try again.",
+        Severity.Error,
+      );
     }
   },
   updateAgent: async (agentCode: string, agentData: AddAgentFormValues) => {

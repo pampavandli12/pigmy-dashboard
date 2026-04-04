@@ -4,7 +4,6 @@ import {
   DataGrid,
   GridToolbarFilterButton,
   GridToolbarQuickFilter,
-  GridOverlay,
   Toolbar,
   type GridColDef,
 } from "@mui/x-data-grid";
@@ -13,13 +12,15 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useAgentStore } from "../store/AgentStore";
-import { Status } from "../types/sharedEnums";
+import { Status, TransactionStatus } from "../types/sharedEnums";
 import { useParams } from "react-router-dom";
+import NoRowsOverlay from "../components/NoRowsOverlay";
 
 type TransactionRow = {
   trasactionId: number;
   accountNumber: number;
   customerName: string;
+  status: keyof typeof TransactionStatus;
   collectedAmount: number;
 };
 
@@ -42,6 +43,15 @@ const columns: GridColDef<TransactionRow>[] = [
     type: "string",
     flex: 1,
     minWidth: 150,
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    type: "string",
+    width: 120,
+    valueFormatter: (params) => {
+      return TransactionStatus[params] || params;
+    },
   },
   {
     field: "collectedAmount",
@@ -76,13 +86,6 @@ function Transactions() {
   const isTransactionLoading = useMemo(
     () => transactionsLoadingStatus === Status.Loading,
     [transactionsLoadingStatus],
-  );
-  const NoTransactionsOverlay = () => (
-    <GridOverlay>
-      <Typography sx={{ color: "#6b7280", fontSize: 14, fontWeight: 500 }}>
-        No tracsactions found for selected date
-      </Typography>
-    </GridOverlay>
   );
 
   const TransactionsToolbar = () => (
@@ -146,8 +149,12 @@ function Transactions() {
             loading={isTransactionLoading}
             getRowId={(row) => row.trasactionId}
             slots={{
-              noRowsOverlay: NoTransactionsOverlay,
-              noResultsOverlay: NoTransactionsOverlay,
+              noRowsOverlay: () => (
+                <NoRowsOverlay message="No tracsactions found for selected date" />
+              ),
+              noResultsOverlay: () => (
+                <NoRowsOverlay message="No tracsactions found for selected date" />
+              ),
               toolbar: TransactionsToolbar,
             }}
             showToolbar

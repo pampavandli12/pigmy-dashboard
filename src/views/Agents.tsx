@@ -5,10 +5,11 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAgentStore } from "../store/AgentStore";
 import LoadingComponent from "../components/LoadingComponent";
-import { Status } from "../types/sharedEnums";
+import { Status, type Agent } from "../types/sharedEnums";
+import AlertDialog from "../components/AlertDialog";
 
 function Agents() {
   const navigate = useNavigate();
@@ -17,6 +18,10 @@ function Agents() {
   const fetchAgentLoadingStatus = useAgentStore(
     (state) => state.fetchAgentLoadingStatus,
   );
+  const [openDeregisterModal, setOpenDeregisterModal] = useState(false);
+  const setSelectedAgent = useAgentStore((state) => state.setSelectedAgent);
+  const updateAgent = useAgentStore((state) => state.updateAgent);
+  const selectedAgent = useAgentStore((state) => state.selectedAgent);
 
   useEffect(() => {
     fetchAgents();
@@ -53,9 +58,33 @@ function Agents() {
   if (fetchAgentLoadingStatus === Status.Loading) {
     return <LoadingComponent />;
   }
+  const deregisterAgent = (agent: Agent) => {
+    setOpenDeregisterModal(true);
+    setSelectedAgent(agent);
+  };
+  const handleAgentDeregister = async (isDeregister: boolean) => {
+    if (!isDeregister || !selectedAgent) return;
+    // call update agent api with block status as yes
 
+    const updatedAgent: Agent = {
+      ...selectedAgent,
+      status: "inactive",
+    };
+
+    await updateAgent(String(selectedAgent.agentCode), updatedAgent);
+    setOpenDeregisterModal(false);
+  };
   return (
     <Box sx={{ width: "100%" }}>
+      <AlertDialog
+        open={openDeregisterModal}
+        handleClose={() => setOpenDeregisterModal(false)}
+        handleConfirm={() => handleAgentDeregister(true)}
+        title={"Do you want to deregister this agent?"}
+        description={
+          "Deregistering an agent will block them from performing any transactions and from using agent mobile application."
+        }
+      />
       {/* Header */}
       <Box
         sx={{
@@ -308,6 +337,7 @@ function Agents() {
                     backgroundColor: "rgba(255, 107, 107, 0.05)",
                   },
                 }}
+                onClick={() => deregisterAgent(agent)}
               >
                 Deregister
               </Button>

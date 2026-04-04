@@ -3,8 +3,6 @@ import {
   Box,
   Button,
   MenuItem,
-  TextField,
-  InputAdornment,
   Typography,
   Paper,
   Select,
@@ -14,7 +12,6 @@ import {
   ListItemText,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
 import type { GridColDef } from "@mui/x-data-grid";
 import { DataGrid } from "@mui/x-data-grid";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -23,6 +20,8 @@ import type { Account } from "../types/Accounts";
 import { useAuthStore } from "../store/AuthStore";
 import { Status } from "../types/sharedEnums";
 import { useAccountStore } from "../store/AccountStore";
+import { useAgentStore } from "../store/AgentStore";
+import NoRowsOverlay from "../components/NoRowsOverlay";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -36,82 +35,6 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
-type Row = {
-  id: number;
-  customerName: string;
-  accountNumber: string;
-  depositAmount: number;
-  depositDate: string; // ISO
-  agent: string;
-};
-
-const sampleRows: Row[] = [
-  {
-    id: 1,
-    customerName: "Sophia Clark",
-    accountNumber: "1234567890",
-    depositAmount: 5000,
-    depositDate: "2024-01-15",
-    agent: "Ethan Miller",
-  },
-  {
-    id: 2,
-    customerName: "Liam Harris",
-    accountNumber: "9876543210",
-    depositAmount: 2500,
-    depositDate: "2024-01-16",
-    agent: "Olivia Davis",
-  },
-  {
-    id: 3,
-    customerName: "Emma Wilson",
-    accountNumber: "1122334455",
-    depositAmount: 7500,
-    depositDate: "2024-01-17",
-    agent: "Noah Brown",
-  },
-  {
-    id: 4,
-    customerName: "Oliver Taylor",
-    accountNumber: "5566778899",
-    depositAmount: 1000,
-    depositDate: "2024-01-18",
-    agent: "Isabella Green",
-  },
-  {
-    id: 5,
-    customerName: "Ava Martinez",
-    accountNumber: "9988776655",
-    depositAmount: 3000,
-    depositDate: "2024-01-19",
-    agent: "Mason White",
-  },
-  {
-    id: 6,
-    customerName: "William Anderson",
-    accountNumber: "4433221100",
-    depositAmount: 6000,
-    depositDate: "2024-01-20",
-    agent: "Charlotte Black",
-  },
-  {
-    id: 7,
-    customerName: "Mia Thompson",
-    accountNumber: "1029384756",
-    depositAmount: 4500,
-    depositDate: "2024-01-21",
-    agent: "Amelia Blue",
-  },
-  {
-    id: 8,
-    customerName: "James Garcia",
-    accountNumber: "6547382910",
-    depositAmount: 8000,
-    depositDate: "2024-01-22",
-    agent: "Harper Red",
-  },
-];
-
 const columns: GridColDef[] = [
   {
     field: "customerName",
@@ -121,26 +44,15 @@ const columns: GridColDef[] = [
   },
   { field: "accountNumber", headerName: "Account Number", width: 160 },
   {
-    field: "depositAmount",
-    headerName: "Deposit Amount",
+    field: "currentBalance",
+    headerName: "Current Balance",
     width: 150,
-    valueFormatter: (params) => {
-      const value = (params as { value?: number }).value as number | undefined;
-      if (value == null) return "";
-      // format with rupee symbol
-      return new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR",
-      }).format(value);
-    },
   },
-  { field: "depositDate", headerName: "Deposit Date", width: 140 },
-  { field: "agent", headerName: "Agent", flex: 1, minWidth: 140 },
+  { field: "lastDepositDate", headerName: "Deposit Date", width: 140 },
+  { field: "agentName", headerName: "Agent Name", flex: 1, minWidth: 140 },
 ];
 
 function AccountsView() {
-  const [rows] = useState<Row[]>(sampleRows);
-  const [search, setSearch] = useState("");
   const [agentFilter, setAgentFilter] = useState<string[]>([]);
   const bankCode = useAuthStore((state) => state.bankCode);
   const uploadUserAccountLoading = useAccountStore(
@@ -151,16 +63,14 @@ function AccountsView() {
   const userAccountsLoadingStatus = useAccountStore(
     (state) => state.userAccountsLoadingStatus,
   );
+  const userAccounts = useAccountStore((state) => state.userAccounts);
 
+  const agents = useAgentStore((state) => state.agents);
   useEffect(() => {
     (async () => {
       await fetchUserAccounts();
     })();
   }, [fetchUserAccounts]);
-  const agents = useMemo(() => {
-    const set = new Set(rows.map((r) => r.agent));
-    return ["All", ...Array.from(set)];
-  }, [rows]);
 
   const handleAgentChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
@@ -217,21 +127,12 @@ function AccountsView() {
     () => uploadUserAccountLoading === Status.Loading,
     [uploadUserAccountLoading],
   );
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (agentFilter.length > 0 && !agentFilter.includes(r.agent))
-        return false;
-      if (s) {
-        return (
-          r.customerName.toLowerCase().includes(s) ||
-          r.accountNumber.toLowerCase().includes(s)
-        );
-      }
-      return true;
-    });
-  }, [rows, search, agentFilter]);
 
+  const filteredAccounts = useMemo(() => {
+    return userAccounts.filter((account) =>
+      agentFilter.length > 0 ? agentFilter.includes(account.agentName) : true,
+    );
+  }, [agentFilter, userAccounts]);
   return (
     <Box sx={{ width: "100%" }}>
       <Box
@@ -279,25 +180,6 @@ function AccountsView() {
             flexWrap: "wrap",
           }}
         >
-          <TextField
-            placeholder="Search by customer name or account number..."
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            sx={{
-              flex: 1,
-              minWidth: 220,
-              "& .MuiOutlinedInput-root": { height: 44, borderRadius: 2 },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#9ca3af" }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-
           <Box
             sx={{ display: "flex", gap: 1, ml: "auto", alignItems: "center" }}
           >
@@ -313,9 +195,9 @@ function AccountsView() {
                 sx={{ textTransform: "none" }}
               >
                 {agents.map((a) => (
-                  <MenuItem key={a} value={a}>
-                    <Checkbox checked={agentFilter.indexOf(a) > -1} />
-                    <ListItemText primary={a} />
+                  <MenuItem key={a.id} value={a.name}>
+                    <Checkbox checked={agentFilter.indexOf(a.name) > -1} />
+                    <ListItemText primary={a.name} />
                   </MenuItem>
                 ))}
               </Select>
@@ -325,7 +207,6 @@ function AccountsView() {
 
         <Box
           sx={{
-            height: 520,
             width: "100%",
             mt: 2,
             display: "flex",
@@ -334,9 +215,25 @@ function AccountsView() {
         >
           <Box sx={{ flex: 1 }}>
             <DataGrid
-              rows={filtered}
+              rows={filteredAccounts}
               columns={columns}
               disableRowSelectionOnClick
+              loading={isUserAccountsLoading}
+              showToolbar
+              paginationMode="client"
+              slots={{
+                noRowsOverlay: () => (
+                  <NoRowsOverlay message="No accounts found. Please upload accounts to view them here." />
+                ),
+                noResultsOverlay: () => (
+                  <NoRowsOverlay message="No accounts match the selected filters." />
+                ),
+              }}
+              pageSizeOptions={[5, 10, 25]}
+              initialState={{
+                pagination: { paginationModel: { pageSize: 10, page: 0 } },
+              }}
+              getRowId={(row) => row.accountNumber}
               sx={{
                 border: "none",
                 "& .MuiDataGrid-columnHeaders": {
@@ -352,8 +249,6 @@ function AccountsView() {
               }}
             />
           </Box>
-
-          {/* Pagination removed per design — table shows all filtered rows */}
         </Box>
       </Paper>
     </Box>

@@ -21,6 +21,7 @@ export type Agent = {
   bankCode: string;
   type: "agent" | "employee";
   limitAmount: number;
+  status: "active" | "inactive";
 };
 
 export type AgentsResponse = Agent[];
@@ -31,3 +32,10 @@ export const Severity = {
   Success: "success",
 } as const;
 export type Severity = (typeof Severity)[keyof typeof Severity];
+export const TransactionStatus = {
+  C: "Collected",
+  Failed: "Failed",
+  Pending: "Pending",
+} as const;
+export type TransactionStatus =
+  (typeof TransactionStatus)[keyof typeof TransactionStatus];
