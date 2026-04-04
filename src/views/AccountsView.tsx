@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
   Box,
   Button,
@@ -19,6 +19,10 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { DataGrid } from "@mui/x-data-grid";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
+import type { Account } from "../types/Accounts";
+import { useAuthStore } from "../store/AuthStore";
+import { Status } from "../types/sharedEnums";
+import { useAccountStore } from "../store/AccountStore";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -134,42 +138,25 @@ const columns: GridColDef[] = [
   { field: "agent", headerName: "Agent", flex: 1, minWidth: 140 },
 ];
 
-const handleFileUpload = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const content = event.target.result;
-    const lines = content.split("\n");
-    const [agent, ...users] = lines;
-    const userList = [];
-    users.forEach((element) => {
-      const [
-        accountNumber,
-        _,
-        customerName,
-        currentBalance,
-        lastDepositDate,
-        ...rest
-      ] = element.split(",");
-      userList.push({
-        accountNumber,
-        customerName,
-        currentBalance,
-        lastDepositDate,
-      });
-    });
-    const [agentCode, ..._] = agent.split(",");
-    console.log({ agentCode, users: userList });
-  };
-  reader.readAsText(file); // 👈 key
-};
 function AccountsView() {
   const [rows] = useState<Row[]>(sampleRows);
   const [search, setSearch] = useState("");
   const [agentFilter, setAgentFilter] = useState<string[]>([]);
+  const bankCode = useAuthStore((state) => state.bankCode);
+  const uploadUserAccountLoading = useAccountStore(
+    (state) => state.uploadUserAccountStatus,
+  );
+  const uploadUserAccount = useAccountStore((state) => state.uploadUserAccount);
+  const fetchUserAccounts = useAccountStore((state) => state.fetchUserAccounts);
+  const userAccountsLoadingStatus = useAccountStore(
+    (state) => state.userAccountsLoadingStatus,
+  );
 
+  useEffect(() => {
+    (async () => {
+      await fetchUserAccounts();
+    })();
+  }, [fetchUserAccounts]);
   const agents = useMemo(() => {
     const set = new Set(rows.map((r) => r.agent));
     return ["All", ...Array.from(set)];
@@ -178,10 +165,58 @@ function AccountsView() {
   const handleAgentChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
     setAgentFilter(
-      typeof value === "string" ? value.split(",") : (value as string[])
+      typeof value === "string" ? value.split(",") : (value as string[]),
     );
   };
 
+  const isUserAccountsLoading = useMemo(
+    () => userAccountsLoadingStatus === Status.Loading,
+    [userAccountsLoadingStatus],
+  );
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !(file instanceof Blob)) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      if (!event.target) return;
+      const content = event.target.result;
+      if (!content || typeof content !== "string") return;
+      const lines = content.split("\n");
+      const [agent, ...users] = lines;
+      const userList: Account[] = [];
+      users.forEach((element) => {
+        const [
+          schemeId,
+          accountNumber,
+          _,
+          customerName,
+          currentBalance,
+          lastDepositDate,
+          ...rest
+        ] = element.split(",");
+        if (!accountNumber || !customerName) return; // skip invalid lines
+        userList.push({
+          schemeId,
+          accountNumber,
+          customerName,
+          currentBalance,
+          lastDepositDate,
+        });
+      });
+      const [temp, agentCode, ..._] = agent.split(",");
+      await uploadUserAccount({
+        agentCode: Number(agentCode),
+        bankCode,
+        users: userList,
+      });
+    };
+    reader.readAsText(file); // 👈 key
+  };
+  const isUploading = useMemo(
+    () => uploadUserAccountLoading === Status.Loading,
+    [uploadUserAccountLoading],
+  );
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return rows.filter((r) => {
@@ -220,6 +255,7 @@ function AccountsView() {
           role={undefined}
           variant="contained"
           tabIndex={-1}
+          loading={isUploading}
           startIcon={<CloudUploadIcon />}
         >
           Upload users

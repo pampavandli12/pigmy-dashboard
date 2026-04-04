@@ -36,4 +36,6 @@ export const API_URLS = {
   LOGIN: "/pigmy/v1/login",
   AGENT: "/pigmy/v1/agent",
   AGENT_TRANSACTIONS: "/pigmy/v1/transaction",
+  UPLOAD_ACCOUNTS: "/pigmy/v1/user",
+  USER_ACCOUNTS: "/pigmy/v1/user",
 };
