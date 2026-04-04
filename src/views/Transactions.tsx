@@ -1,11 +1,29 @@
+import { useEffect, useMemo, useState } from "react";
 import { Box, Typography } from "@mui/material";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import {
+  DataGrid,
+  GridToolbarFilterButton,
+  GridToolbarQuickFilter,
+  GridOverlay,
+  Toolbar,
+  type GridColDef,
+} from "@mui/x-data-grid";
+import type { Dayjs } from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { useAgentStore } from "../store/AgentStore";
+import { Status } from "../types/sharedEnums";
+import { useParams } from "react-router-dom";
 
-const columns: GridColDef<(typeof rows)[number]>[] = [
+type TransactionRow = {
+  trasactionId: number;
+  accountNumber: number;
+  customerName: string;
+  collectedAmount: number;
+};
+
+const columns: GridColDef<TransactionRow>[] = [
   {
     field: "trasactionId",
     headerName: "Transaction ID",
@@ -22,74 +40,131 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
     field: "customerName",
     headerName: "Customer Name",
     type: "string",
-    width: 150,
+    flex: 1,
+    minWidth: 150,
   },
   {
-    field: "depositAmount",
-    headerName: "Deposit Amount",
+    field: "collectedAmount",
+    headerName: "Collected Amount",
     type: "number",
     width: 150,
   },
 ];
 
-const rows = [
-  {
-    trasactionId: 1,
-    accountNumber: 3,
-    customerName: "Rahul Mehta",
-    depositAmount: 50.0,
-  },
-  {
-    trasactionId: 30001,
-    accountNumber: 3,
-    customerName: "Rahul Mehta",
-    depositAmount: 5000.0,
-  },
-];
-
 function Transactions() {
-  return (
-    <Box sx={{ width: "100%" }}>
-      {/* Header */}
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-          Transactions List
-        </Typography>
-        <Typography sx={{ color: "#999999", fontSize: "14px" }}>
-          Monitor and manage user transactions.
-        </Typography>
-      </Box>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DemoContainer components={["DatePicker"]}>
-          <DatePicker label="Basic date picker" />
-        </DemoContainer>
-      </LocalizationProvider>
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const transactions = useAgentStore((state) => state.transactions);
+  const transactionsLoadingStatus = useAgentStore(
+    (state) => state.fetchTransactionsLoadingStatus,
+  );
+  const fetchTransactions = useAgentStore((state) => state.fetchTransactions);
+  const params = useParams();
+
+  useEffect(() => {
+    if (selectedDate && params.agentCode) {
+      console.log(
+        "Fetch transactions for date:",
+        selectedDate.format("YYYY-MM-DD"),
+      );
+      fetchTransactions(
+        params.agentCode as unknown as number,
+        selectedDate.format("YYYY-MM-DD"),
+      );
+    }
+  }, [selectedDate, fetchTransactions, params.agentCode]);
+
+  const isTransactionLoading = useMemo(
+    () => transactionsLoadingStatus === Status.Loading,
+    [transactionsLoadingStatus],
+  );
+  const NoTransactionsOverlay = () => (
+    <GridOverlay>
+      <Typography sx={{ color: "#6b7280", fontSize: 14, fontWeight: 500 }}>
+        No tracsactions found for selected date
+      </Typography>
+    </GridOverlay>
+  );
+
+  const TransactionsToolbar = () => (
+    <Toolbar>
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
-          mb: 4,
+          gap: 2,
+          p: 2,
+          flexWrap: "wrap",
+          width: "100%",
+          alignItems: "center",
         }}
       >
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          getRowId={(row) => row.trasactionId}
-          showToolbar
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 5,
-              },
-            },
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <GridToolbarFilterButton />
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexWrap: "wrap",
+            alignItems: "center",
+            marginLeft: "auto",
           }}
-          pageSizeOptions={[5]}
-          checkboxSelection
-          disableRowSelectionOnClick
-        />
+        >
+          <GridToolbarQuickFilter />
+          <DatePicker
+            label="Filter by date"
+            value={selectedDate}
+            onChange={setSelectedDate}
+            slotProps={{
+              textField: {
+                size: "small",
+              },
+            }}
+          />
+        </Box>
       </Box>
-    </Box>
+    </Toolbar>
+  );
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ width: "100%" }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+            Transactions List
+          </Typography>
+          <Typography sx={{ color: "#999999", fontSize: "14px" }}>
+            Monitor and manage user transactions.
+          </Typography>
+        </Box>
+
+        <Box sx={{ width: "100%" }}>
+          <DataGrid
+            autoHeight
+            rows={transactions}
+            columns={columns}
+            loading={isTransactionLoading}
+            getRowId={(row) => row.trasactionId}
+            slots={{
+              noRowsOverlay: NoTransactionsOverlay,
+              noResultsOverlay: NoTransactionsOverlay,
+              toolbar: TransactionsToolbar,
+            }}
+            showToolbar
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 5,
+                },
+              },
+            }}
+            pageSizeOptions={[5]}
+            checkboxSelection={false}
+            disableRowSelectionOnClick
+          />
+        </Box>
+      </Box>
+    </LocalizationProvider>
   );
 }
 

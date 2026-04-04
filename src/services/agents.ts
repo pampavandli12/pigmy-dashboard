@@ -1,4 +1,5 @@
 import { useAuthStore } from "../store/AuthStore";
+import type { TransactionsResponse } from "../types/Agent";
 import { API_URLS } from "../utils/constants";
 import type { AddAgentFormValues } from "../utils/formSchemas";
 import { api } from "./axios";
@@ -35,5 +36,17 @@ export const updateAgent = async (
       bankCode,
       agentCode: Number(agentCode),
     })
+    .then((response) => response.data);
+};
+export const fetchTransactions = async (
+  agentCode: number,
+  date: string,
+): Promise<TransactionsResponse> => {
+  const bankCode = useAuthStore.getState().bankCode; // Get bankCode from Zustand store
+
+  return api
+    .get(
+      `${API_URLS.AGENT_TRANSACTIONS}?agentCode=${agentCode}&bankCode=${bankCode}&date=${date}`,
+    )
     .then((response) => response.data);
 };

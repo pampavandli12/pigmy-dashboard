@@ -35,4 +35,5 @@ export const appConfig = getConfig("development");
 export const API_URLS = {
   LOGIN: "/pigmy/v1/login",
   AGENT: "/pigmy/v1/agent",
+  AGENT_TRANSACTIONS: "/pigmy/v1/transaction",
 };

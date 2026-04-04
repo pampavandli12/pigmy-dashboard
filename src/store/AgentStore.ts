@@ -10,9 +10,11 @@ import {
   createAgent,
   fetchAgentByCode,
   fetchAgents,
+  fetchTransactions,
   updateAgent,
 } from "../services/agents";
 import { useAlertStore } from "./AlertStore";
+import type { TransactionsResponse } from "../types/Agent";
 
 type State = {
   fetchAgentLoadingStatus: Status;
@@ -21,10 +23,13 @@ type State = {
   fetchAgentByCodeLoadingStatus: Status;
   agents: AgentsResponse;
   selectedAgent: Agent | null;
+  transactions: TransactionsResponse;
+  fetchTransactionsLoadingStatus: Status;
 };
 
 type Action = {
   fetchAgents: () => void;
+  fetchTransactions: (agentCode: number, date: string) => void;
   createAgent: (paylaod: AddAgentFormValues) => void;
   fetchAgentByCode: (agentCode: string) => void;
   setSelectedAgent: (agent: Agent | null) => void;
@@ -38,6 +43,8 @@ export const useAgentStore = create<State & Action>((set) => ({
   createAgentLoadingStatus: Status.Idle,
   fetchAgentByCodeLoadingStatus: Status.Idle,
   updateAgentLoadingStatus: Status.Idle,
+  transactions: [],
+  fetchTransactionsLoadingStatus: Status.Idle,
   agents: [],
   selectedAgent: null,
   setSelectedAgent: (agent) => set({ selectedAgent: agent }),
@@ -80,6 +87,19 @@ export const useAgentStore = create<State & Action>((set) => ({
     } catch (error) {
       console.error("Failed to fetch agent by code:", error);
       set({ fetchAgentByCodeLoadingStatus: Status.Error });
+    }
+  },
+  fetchTransactions: async (agentCode: number, date: string) => {
+    set({ fetchTransactionsLoadingStatus: Status.Loading, transactions: [] });
+    try {
+      const transactions = await fetchTransactions(agentCode, date);
+      set({
+        transactions,
+        fetchTransactionsLoadingStatus: Status.Success,
+      });
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+      set({ fetchTransactionsLoadingStatus: Status.Error });
     }
   },
   updateAgent: async (agentCode: string, agentData: AddAgentFormValues) => {
