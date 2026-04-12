@@ -14,12 +14,14 @@ import {
   createDeposit,
   fetchAgentByCode,
   fetchAgents,
+  fetchPastDeposits,
   fetchTransactions,
   updateAgent,
 } from '../services/agents';
 import { useAlertStore } from './AlertStore';
 import type {
   CreateDepositPayload,
+  PastDeposit,
   TransactionsResponse,
 } from '../types/Agent';
 import { useAuthStore } from './AuthStore';
@@ -35,6 +37,8 @@ type State = {
   transactions: TransactionsResponse;
   fetchTransactionsLoadingStatus: Status;
   createDepositLoadingStatus: Status;
+  fetchPastDepositsLoadingStatus: Status;
+  pastDeposits: PastDeposit[];
 };
 
 type Action = {
@@ -50,6 +54,11 @@ type Action = {
     formValues: CreateDepositFormValues,
     agentCode: number,
   ) => void;
+  fetchPastDeposits: (
+    agentCode: number,
+    fromDate: string,
+    toDate: string,
+  ) => void;
 };
 
 export const useAgentStore = create<State & Action>((set) => ({
@@ -62,6 +71,8 @@ export const useAgentStore = create<State & Action>((set) => ({
   agents: [],
   selectedAgent: null,
   createDepositLoadingStatus: Status.Idle,
+  fetchPastDepositsLoadingStatus: Status.Idle,
+  pastDeposits: [],
   setSelectedAgent: (agent) => set({ selectedAgent: agent }),
   fetchAgents: async () => {
     set({ fetchAgentLoadingStatus: Status.Loading });
@@ -185,6 +196,37 @@ export const useAgentStore = create<State & Action>((set) => ({
       console.error('Failed to create deposit:', errorMessage);
       set({ createDepositLoadingStatus: Status.Error });
       showAlert(true, errorMessage, 'error');
+    }
+  },
+  fetchPastDeposits: async (
+    agentCode: number,
+    fromDate: string,
+    toDate: string,
+  ) => {
+    set({ fetchPastDepositsLoadingStatus: Status.Loading });
+    const alertStore = useAlertStore.getState();
+    try {
+      const response = await fetchPastDeposits({
+        agentCode,
+        bankCode: useAuthStore.getState().bankCode || '',
+        fromDate,
+        toDate,
+      });
+      set({ pastDeposits: response });
+      set({ fetchPastDepositsLoadingStatus: Status.Success });
+      alertStore.showAlert(
+        true,
+        'Past deposits fetched successfully.',
+        Severity.Success,
+      );
+    } catch (error) {
+      console.error('Failed to fetch past deposits:', error);
+      set({ fetchPastDepositsLoadingStatus: Status.Error });
+      alertStore.showAlert(
+        true,
+        'Failed to fetch past deposits. Please try again.',
+        Severity.Error,
+      );
     }
   },
   setCreateAgentLoadingStatus: (status: Status) =>

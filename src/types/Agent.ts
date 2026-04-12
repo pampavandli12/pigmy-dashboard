@@ -9,6 +9,14 @@ export interface Transaction {
   schemeName: string;
 }
 
+export interface PastDeposit {
+  depositId: number;
+  agentCode: number;
+  bankCode: string;
+  depositDate: string;
+  totalDepositedAmount: number;
+}
+
 export type TransactionsResponse = Transaction[];
 export interface CreateDepositPayload {
   name: string;
@@ -18,4 +26,10 @@ export interface CreateDepositPayload {
   voucherId: string;
   from: string | Date;
   to: string | Date;
+}
+export interface PastDepositPayload {
+  agentCode: number;
+  fromDate: string;
+  toDate: string;
+  bankCode: string;
 }
