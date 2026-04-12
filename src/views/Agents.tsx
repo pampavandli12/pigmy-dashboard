@@ -1,15 +1,15 @@
-import { Box, Typography, Button, Card, Avatar } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import SwapCallsIcon from "@mui/icons-material/SwapCalls";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import LockResetIcon from "@mui/icons-material/LockReset";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useAgentStore } from "../store/AgentStore";
-import LoadingComponent from "../components/LoadingComponent";
-import { Status, type Agent } from "../types/sharedEnums";
-import AlertDialog from "../components/AlertDialog";
+import { Box, Typography, Button, Card, Avatar } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import SwapCallsIcon from '@mui/icons-material/SwapCalls';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import LockResetIcon from '@mui/icons-material/LockReset';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useAgentStore } from '../store/AgentStore';
+import LoadingComponent from '../components/LoadingComponent';
+import { Status, type Agent } from '../types/sharedEnums';
+import AlertDialog from '../components/AlertDialog';
 
 function Agents() {
   const navigate = useNavigate();
@@ -35,22 +35,22 @@ function Agents() {
   //   return "#666666";
   // };
   const agentInitial = (name: string) => {
-    const parts = name.split(" ");
+    const parts = name.split(' ');
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return parts[0].charAt(0).toUpperCase() + parts[1].charAt(0).toUpperCase();
   };
   const addAgent = () => {
     // Logic to navigate to Add Agent page
-    console.log("Navigate to Add Agent page");
-    navigate("/agents/addAgent");
+    console.log('Navigate to Add Agent page');
+    navigate('/agents/addAgent');
   };
   const handleEditAgent = async (agentCode: number) => {
-    console.log("Navigate to Edit Agent page for agent code:", agentCode);
+    console.log('Navigate to Edit Agent page for agent code:', agentCode);
     navigate(`/agents/editAgent/${agentCode}`);
   };
 
   const loadTransactions = (agentCode: number) => {
-    console.log("redirect to transactions page");
+    console.log('redirect to transactions page');
     navigate(`/agents/transactions/${agentCode}`);
   };
 
@@ -68,54 +68,54 @@ function Agents() {
 
     const updatedAgent: Agent = {
       ...selectedAgent,
-      status: "inactive",
+      status: 'inactive',
     };
 
     await updateAgent(String(selectedAgent.agentCode), updatedAgent);
     setOpenDeregisterModal(false);
   };
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: '100%' }}>
       <AlertDialog
         open={openDeregisterModal}
         handleClose={() => setOpenDeregisterModal(false)}
         handleConfirm={() => handleAgentDeregister(true)}
-        title={"Do you want to deregister this agent?"}
+        title={'Do you want to deregister this agent?'}
         description={
-          "Deregistering an agent will block them from performing any transactions and from using agent mobile application."
+          'Deregistering an agent will block them from performing any transactions and from using agent mobile application.'
         }
       />
       {/* Header */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
           mb: 4,
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+          <Typography variant='h4' sx={{ fontWeight: 700, mb: 0.5 }}>
             Agent List
           </Typography>
-          <Typography sx={{ color: "#999999", fontSize: "14px" }}>
+          <Typography sx={{ color: '#999999', fontSize: '14px' }}>
             Monitor and manage your agents.
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
-            variant="contained"
+            variant='contained'
             startIcon={<AddIcon />}
             onClick={addAgent}
             sx={{
-              backgroundColor: "#1976d2",
-              color: "#ffffff",
-              textTransform: "none",
+              backgroundColor: '#1976d2',
+              color: '#ffffff',
+              textTransform: 'none',
               fontWeight: 600,
-              borderRadius: "8px",
+              borderRadius: '8px',
               px: 3,
-              "&:hover": {
-                backgroundColor: "#1565c0",
+              '&:hover': {
+                backgroundColor: '#1565c0',
               },
             }}
           >
@@ -127,12 +127,12 @@ function Agents() {
       {/* Agent Cards Grid */}
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(1, 1fr)",
-            md: "repeat(2, 1fr)",
-            lg: "repeat(3, 1fr)",
+            xs: '1fr',
+            sm: 'repeat(1, 1fr)',
+            md: 'repeat(2, 1fr)',
+            lg: 'repeat(3, 1fr)',
           },
           gap: 3,
         }}
@@ -142,46 +142,46 @@ function Agents() {
             key={index}
             elevation={1}
             sx={{
-              borderRadius: "12px",
+              borderRadius: '12px',
               padding: 2.5,
             }}
           >
             {/* Card Header */}
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
                 mb: 2,
               }}
             >
-              <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                 <Avatar
                   sx={{
                     width: 48,
                     height: 48,
-                    backgroundColor: "#B3D9F2",
-                    color: "#333333",
+                    backgroundColor: '#B3D9F2',
+                    color: '#333333',
                     fontWeight: 700,
-                    fontSize: "20px",
+                    fontSize: '20px',
                   }}
                 >
                   {agentInitial(agent.name)}
                 </Avatar>
-                <Box sx={{ flex: "auto" }}>
+                <Box sx={{ flex: 'auto' }}>
                   <Typography
                     sx={{
                       fontWeight: 700,
-                      color: "#1a1a1a",
-                      fontSize: "15px",
+                      color: '#1a1a1a',
+                      fontSize: '15px',
                     }}
                   >
                     {agent.name}
                   </Typography>
                   <Typography
                     sx={{
-                      color: "#1976d2",
-                      fontSize: "12px",
+                      color: '#1976d2',
+                      fontSize: '12px',
                       fontWeight: 600,
                     }}
                   >
@@ -189,8 +189,8 @@ function Agents() {
                   </Typography>
                   <Typography
                     sx={{
-                      color: "#999999",
-                      fontSize: "12px",
+                      color: '#999999',
+                      fontSize: '12px',
                       mt: 0.5,
                     }}
                   >
@@ -203,38 +203,38 @@ function Agents() {
             {/* Status Row */}
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
                 gap: 2,
                 mb: 2.5,
                 pb: 2.5,
-                borderBottom: "1px solid #f0f0f0",
+                borderBottom: '1px solid #f0f0f0',
               }}
             >
               <Box>
                 <Typography
                   sx={{
-                    fontSize: "11px",
-                    color: "#999999",
+                    fontSize: '11px',
+                    color: '#999999',
                     fontWeight: 500,
                     mb: 0.5,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                   }}
                 >
                   Mobile Status
                 </Typography>
-                <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>
                   Registered
                 </Typography>
               </Box>
               <Box>
                 <Typography
                   sx={{
-                    fontSize: "11px",
-                    color: "#999999",
+                    fontSize: '11px',
+                    color: '#999999',
                     fontWeight: 500,
                     mb: 0.5,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                   }}
                 >
                   Block Status
@@ -252,16 +252,16 @@ function Agents() {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: "11px",
-                    color: "#999999",
+                    fontSize: '11px',
+                    color: '#999999',
                     fontWeight: 500,
                     mb: 0.5,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                   }}
                 >
                   Agent Limit
                 </Typography>
-                <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>
                   {agent.limitAmount}
                 </Typography>
               </Box>
@@ -270,71 +270,72 @@ function Agents() {
             {/* Action Buttons */}
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
                 gap: 1.5,
               }}
             >
               <Button
-                variant="text"
+                variant='text'
                 startIcon={<SwapCallsIcon />}
                 onClick={() => loadTransactions(agent.agentCode)}
                 sx={{
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  color: "#1976d2",
-                  textTransform: "none",
-                  justifyContent: "flex-start",
-                  "&:hover": {
-                    backgroundColor: "rgba(25, 118, 210, 0.05)",
+                  color: '#1976d2',
+                  textTransform: 'none',
+                  justifyContent: 'flex-start',
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.05)',
                   },
                 }}
               >
                 Transactions
               </Button>
               <Button
-                variant="text"
+                variant='text'
+                onClick={() => navigate(`/agents/deposits/${agent.agentCode}`)}
                 startIcon={<AttachMoneyIcon />}
                 sx={{
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  color: "#333333",
-                  textTransform: "none",
-                  justifyContent: "flex-start",
-                  "&:hover": {
-                    backgroundColor: "rgba(0, 0, 0, 0.05)",
+                  color: '#333333',
+                  textTransform: 'none',
+                  justifyContent: 'flex-start',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
                   },
                 }}
               >
                 Deposits
               </Button>
               <Button
-                variant="text"
+                variant='text'
                 startIcon={<LockResetIcon />}
                 sx={{
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  color: "#333333",
-                  textTransform: "none",
-                  justifyContent: "flex-start",
-                  "&:hover": {
-                    backgroundColor: "rgba(0, 0, 0, 0.05)",
+                  color: '#333333',
+                  textTransform: 'none',
+                  justifyContent: 'flex-start',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
                   },
                 }}
               >
                 Reset PIN
               </Button>
               <Button
-                variant="text"
+                variant='text'
                 startIcon={<DeleteIcon />}
                 sx={{
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  color: "#ff6b6b",
-                  textTransform: "none",
-                  justifyContent: "flex-start",
-                  "&:hover": {
-                    backgroundColor: "rgba(255, 107, 107, 0.05)",
+                  color: '#ff6b6b',
+                  textTransform: 'none',
+                  justifyContent: 'flex-start',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 107, 107, 0.05)',
                   },
                 }}
                 onClick={() => deregisterAgent(agent)}
@@ -343,7 +344,7 @@ function Agents() {
               </Button>
             </Box>
             <Button
-              variant="outlined"
+              variant='outlined'
               fullWidth
               sx={{ mt: 2 }}
               onClick={() => handleEditAgent(agent.agentCode)}

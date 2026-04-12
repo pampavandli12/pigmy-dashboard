@@ -1,20 +1,29 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 import {
   Severity,
   Status,
   type Agent,
   type AgentsResponse,
-} from "../types/sharedEnums";
-import type { AddAgentFormValues } from "../utils/formSchemas";
+} from '../types/sharedEnums';
+import type {
+  AddAgentFormValues,
+  CreateDepositFormValues,
+} from '../utils/formSchemas';
 import {
   createAgent,
+  createDeposit,
   fetchAgentByCode,
   fetchAgents,
   fetchTransactions,
   updateAgent,
-} from "../services/agents";
-import { useAlertStore } from "./AlertStore";
-import type { TransactionsResponse } from "../types/Agent";
+} from '../services/agents';
+import { useAlertStore } from './AlertStore';
+import type {
+  CreateDepositPayload,
+  TransactionsResponse,
+} from '../types/Agent';
+import { useAuthStore } from './AuthStore';
+import dayjs from 'dayjs';
 
 type State = {
   fetchAgentLoadingStatus: Status;
@@ -25,6 +34,7 @@ type State = {
   selectedAgent: Agent | null;
   transactions: TransactionsResponse;
   fetchTransactionsLoadingStatus: Status;
+  createDepositLoadingStatus: Status;
 };
 
 type Action = {
@@ -36,6 +46,10 @@ type Action = {
   updateAgent: (agentCode: string, agentData: AddAgentFormValues) => void;
   setCreateAgentLoadingStatus: (status: Status) => void;
   setUpdateAgentLoadingStatus: (status: Status) => void;
+  createDeposit: (
+    formValues: CreateDepositFormValues,
+    agentCode: number,
+  ) => void;
 };
 
 export const useAgentStore = create<State & Action>((set) => ({
@@ -47,6 +61,7 @@ export const useAgentStore = create<State & Action>((set) => ({
   fetchTransactionsLoadingStatus: Status.Idle,
   agents: [],
   selectedAgent: null,
+  createDepositLoadingStatus: Status.Idle,
   setSelectedAgent: (agent) => set({ selectedAgent: agent }),
   fetchAgents: async () => {
     set({ fetchAgentLoadingStatus: Status.Loading });
@@ -54,7 +69,7 @@ export const useAgentStore = create<State & Action>((set) => ({
       const agents = await fetchAgents();
       set({ agents, fetchAgentLoadingStatus: Status.Success });
     } catch (error) {
-      console.error("Failed to fetch agents:", error);
+      console.error('Failed to fetch agents:', error);
       set({ fetchAgentLoadingStatus: Status.Error });
     }
   },
@@ -64,13 +79,13 @@ export const useAgentStore = create<State & Action>((set) => ({
     try {
       await createAgent(payload);
       set({ createAgentLoadingStatus: Status.Success });
-      showAlert(true, "Agent created successfully!!", Severity.Success);
+      showAlert(true, 'Agent created successfully!!', Severity.Success);
     } catch (error) {
-      console.error("Failed to create agent:", error);
+      console.error('Failed to create agent:', error);
       set({ createAgentLoadingStatus: Status.Error });
       showAlert(
         false,
-        "Create Agent Failed, Please try again",
+        'Create Agent Failed, Please try again',
         Severity.Warning,
       );
     }
@@ -79,13 +94,13 @@ export const useAgentStore = create<State & Action>((set) => ({
     set({ fetchAgentByCodeLoadingStatus: Status.Loading });
     try {
       const agent = await fetchAgentByCode(agentCode);
-      console.log("Fetched agent by code:", agent);
+      console.log('Fetched agent by code:', agent);
       set({
         selectedAgent: agent,
         fetchAgentByCodeLoadingStatus: Status.Success,
       });
     } catch (error) {
-      console.error("Failed to fetch agent by code:", error);
+      console.error('Failed to fetch agent by code:', error);
       set({ fetchAgentByCodeLoadingStatus: Status.Error });
     }
   },
@@ -100,15 +115,15 @@ export const useAgentStore = create<State & Action>((set) => ({
       });
       alertStore.showAlert(
         true,
-        "Transactions fetched successfully.",
+        'Transactions fetched successfully.',
         Severity.Success,
       );
     } catch (error) {
-      console.error("Failed to fetch transactions:", error);
+      console.error('Failed to fetch transactions:', error);
       set({ fetchTransactionsLoadingStatus: Status.Error });
       alertStore.showAlert(
         true,
-        "Failed to fetch transactions. Please try again.",
+        'Failed to fetch transactions. Please try again.',
         Severity.Error,
       );
     }
@@ -119,11 +134,57 @@ export const useAgentStore = create<State & Action>((set) => ({
     try {
       await updateAgent(agentCode, agentData);
       set({ updateAgentLoadingStatus: Status.Success });
-      showAlert(true, "Agent updated successfully!", "success");
+      showAlert(true, 'Agent updated successfully!', 'success');
     } catch (error) {
-      console.error("Failed to update agent:", error);
+      console.error('Failed to update agent:', error);
       set({ updateAgentLoadingStatus: Status.Error });
-      showAlert(true, "Failed to update agent. Please try again.", "error");
+      showAlert(true, 'Failed to update agent. Please try again.', 'error');
+    }
+  },
+  createDeposit: async (
+    formValues: CreateDepositFormValues,
+    agentCode: number,
+  ) => {
+    // Implement the logic to create a deposit using the form values
+    // You can call an API service here and handle the response accordingly
+    set({ createDepositLoadingStatus: Status.Loading });
+    const bankCode = useAuthStore.getState().bankCode; // Get bankCode from Zustand store
+    const showAlert = useAlertStore.getState().showAlert;
+    const agentName =
+      useAgentStore
+        .getState()
+        .agents.find((agent) => agent.agentCode === agentCode)?.name ||
+      'Unknown Agent';
+    const payload: CreateDepositPayload = {
+      name: agentName,
+      agentCode: agentCode,
+      bankCode: bankCode || '',
+      depositingAmount: formValues.depositingAmount,
+      voucherId: formValues.voucherId,
+      from: dayjs(formValues.dateRange.startDate).format('YYYY-MM-DD'),
+      to: dayjs(formValues.dateRange.endDate).format('YYYY-MM-DD'),
+    };
+    console.log('Creating deposit with values:', formValues);
+    try {
+      const response = await createDeposit(payload);
+      console.log('Deposit created successfully:', response);
+      set({ createDepositLoadingStatus: Status.Success });
+      showAlert(
+        true,
+        'Deposit created and file downloaded successfully!',
+        'success',
+      );
+    } catch (error) {
+      const errorObj = error as {
+        response?: { data: string };
+        message?: string;
+      };
+      const errorMessage = errorObj.response?.data
+        ? JSON.parse(errorObj.response.data)?.error || 'Unknown error'
+        : errorObj.message || 'Unknown error';
+      console.error('Failed to create deposit:', errorMessage);
+      set({ createDepositLoadingStatus: Status.Error });
+      showAlert(true, errorMessage, 'error');
     }
   },
   setCreateAgentLoadingStatus: (status: Status) =>

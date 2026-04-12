@@ -1,8 +1,11 @@
-import { useAuthStore } from "../store/AuthStore";
-import type { TransactionsResponse } from "../types/Agent";
-import { API_URLS } from "../utils/constants";
-import type { AddAgentFormValues } from "../utils/formSchemas";
-import { api } from "./axios";
+import { useAuthStore } from '../store/AuthStore';
+import type {
+  CreateDepositPayload,
+  TransactionsResponse,
+} from '../types/Agent';
+import { API_URLS } from '../utils/constants';
+import type { AddAgentFormValues } from '../utils/formSchemas';
+import { api } from './axios';
 
 export const fetchAgents = async () => {
   const bankCode = useAuthStore.getState().bankCode; // Get bankCode from Zustand store
@@ -48,5 +51,12 @@ export const fetchTransactions = async (
     .get(
       `${API_URLS.AGENT_TRANSACTIONS}?agentCode=${agentCode}&bankCode=${bankCode}&date=${date}`,
     )
+    .then((response) => response.data);
+};
+export const createDeposit = async (
+  payload: CreateDepositPayload,
+): Promise<void> => {
+  return api
+    .post(API_URLS.CREATE_DEPOSIT, { ...payload })
     .then((response) => response.data);
 };
