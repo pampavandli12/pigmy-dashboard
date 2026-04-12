@@ -3,19 +3,101 @@ import CreateDepositModal from '../components/CreateDepositModal';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAgentStore } from '../store/AgentStore';
-import {
-  DataGrid,
-  GridToolbarFilterButton,
-  GridToolbarQuickFilter,
-  Toolbar,
-  type GridColDef,
-} from '@mui/x-data-grid';
+import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Status } from '../types/sharedEnums';
 import NoRowsOverlay from '../components/NoRowsOverlay';
-import type { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import type { SubmitHandler } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  depositFilterSchema,
+  type DepositFilterFormValues,
+} from '../utils/formSchemas';
+import dayjs from 'dayjs';
+
+interface FilterBarProps {
+  control: any;
+  handleSubmit: any;
+  onFilterSubmit: any;
+  errors: any;
+}
+
+const FilterBar = ({
+  control,
+  handleSubmit,
+  onFilterSubmit,
+  errors,
+}: FilterBarProps) => (
+  <Box
+    component='form'
+    onSubmit={handleSubmit(onFilterSubmit)}
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: 'auto auto auto',
+      gap: 2,
+      p: 2,
+      mb: 2,
+      backgroundColor: '#f5f5f5',
+      borderRadius: 1,
+      alignItems: 'start',
+    }}
+  >
+    <Controller
+      name='fromDate'
+      control={control}
+      render={({ field: { onChange, value } }) => (
+        <DatePicker
+          label='From Date'
+          value={value ? dayjs(value) : null}
+          onChange={(date) => onChange(date?.toISOString() || null)}
+          slotProps={{
+            textField: {
+              size: 'small',
+              error: !!errors.fromDate,
+              helperText: errors.fromDate?.message,
+            },
+          }}
+        />
+      )}
+    />
+
+    <Controller
+      name='toDate'
+      control={control}
+      render={({ field: { onChange, value } }) => (
+        <DatePicker
+          label='To Date'
+          value={value ? dayjs(value) : null}
+          onChange={(date) => onChange(date?.toISOString() || null)}
+          slotProps={{
+            textField: {
+              size: 'small',
+              error: !!errors.toDate,
+              helperText: errors.toDate?.message,
+            },
+          }}
+        />
+      )}
+    />
+
+    <Button
+      type='submit'
+      variant='contained'
+      size='small'
+      sx={{
+        alignSelf: 'start',
+        height: '40px',
+        textTransform: 'uppercase',
+        fontSize: '0.875rem',
+      }}
+    >
+      Search
+    </Button>
+  </Box>
+);
 
 function Deposits() {
   const [isDepositModalOpen, setDepositModalOpen] = useState(false);
@@ -31,26 +113,28 @@ function Deposits() {
   );
   const fetchAgents = useAgentStore((state) => state.fetchAgents);
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<DepositFilterFormValues>({
+    resolver: zodResolver(depositFilterSchema),
+    mode: 'onBlur',
+  });
 
-  useEffect(() => {
-    if (selectedDate && params.agentCode) {
-      // Implement date-based deposit fetching logic here
-      fetchPastDeposits(
-        Number(params.agentCode),
-        selectedDate.format('YYYY-MM-DD'),
-        selectedDate.format('YYYY-MM-DD'),
-      );
-    }
-  }, [selectedDate, params.agentCode, fetchPastDeposits]);
-  const loadData = async () => {
-    if (fetchAgentsLoadingStatus === Status.Idle) {
-      await fetchAgents();
+  const onFilterSubmit: SubmitHandler<DepositFilterFormValues> = (data) => {
+    if (params.agentCode) {
+      const fromDate = dayjs(data.fromDate).format('YYYY-MM-DD');
+      const toDate = dayjs(data.toDate).format('YYYY-MM-DD');
+      fetchPastDeposits(Number(params.agentCode), fromDate, toDate);
     }
   };
+
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (fetchAgentsLoadingStatus === Status.Idle) {
+      fetchAgents();
+    }
+  }, [fetchAgentsLoadingStatus, fetchAgents]);
   const columns: GridColDef[] = [
     {
       field: 'depositId',
@@ -114,47 +198,6 @@ function Deposits() {
     }));
   }, [pastDeposits, agents, params.agentCode]);
 
-  const DepositsToolbar = () => (
-    <Toolbar>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 2,
-          p: 2,
-          flexWrap: 'wrap',
-          width: '100%',
-          alignItems: 'center',
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <GridToolbarFilterButton />
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            marginLeft: 'auto',
-          }}
-        >
-          <GridToolbarQuickFilter />
-          <DatePicker
-            label='Filter by date'
-            value={selectedDate}
-            onChange={setSelectedDate}
-            slotProps={{
-              textField: {
-                size: 'small',
-              },
-            }}
-          />
-        </Box>
-      </Box>
-    </Toolbar>
-  );
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ width: '100%' }}>
@@ -182,6 +225,12 @@ function Deposits() {
               Create Deposit
             </Button>
           </Box>
+          <FilterBar
+            control={control}
+            handleSubmit={handleSubmit}
+            onFilterSubmit={onFilterSubmit}
+            errors={errors}
+          />
           <Box sx={{ width: '100%' }}>
             <DataGrid
               autoHeight
@@ -196,7 +245,6 @@ function Deposits() {
                 noResultsOverlay: () => (
                   <NoRowsOverlay message='No deposits found for selected date' />
                 ),
-                toolbar: DepositsToolbar,
               }}
               showToolbar
               initialState={{

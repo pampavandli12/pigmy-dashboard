@@ -120,3 +120,40 @@ export const createDepositSchema = z.object({
 });
 
 export type CreateDepositFormValues = z.infer<typeof createDepositSchema>;
+
+// Deposit Filter form validation schema using Zod
+export const depositFilterSchema = z
+  .object({
+    fromDate: z
+      .date({
+        error: (iss) =>
+          iss.input === undefined ? 'Field is required.' : 'Invalid input.',
+      })
+      .or(
+        z
+          .string({
+            error: (iss) =>
+              iss.input === undefined ? 'Field is required.' : 'Invalid input.',
+          })
+          .datetime(),
+      ),
+    toDate: z
+      .date({
+        error: (iss) =>
+          iss.input === undefined ? 'Field is required.' : 'Invalid input.',
+      })
+      .or(
+        z
+          .string({
+            error: (iss) =>
+              iss.input === undefined ? 'Field is required.' : 'Invalid input.',
+          })
+          .datetime(),
+      ),
+  })
+  .refine((data) => data.fromDate <= data.toDate, {
+    message: 'From date must be before or equal to to date',
+    path: ['toDate'],
+  });
+
+export type DepositFilterFormValues = z.infer<typeof depositFilterSchema>;
