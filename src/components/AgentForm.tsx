@@ -434,6 +434,10 @@ function AddAgent({
                       }
                     />
                     <FormHelperText>{errors.status?.message}</FormHelperText>
+                    <FormHelperText>
+                      Disabling the agent will remove them from the system and
+                      prevent them from logging in.
+                    </FormHelperText>
                   </FormControl>
                 )}
               />
