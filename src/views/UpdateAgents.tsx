@@ -70,6 +70,7 @@ export default function UpdateAgents() {
             email: agentData?.email,
             limitAmount: agentData?.limitAmount,
             type: agentData?.type,
+            status: agentData?.status,
             agentCode: agentData?.agentCode,
             password: agentData?.password,
           } as AddAgentFormValues

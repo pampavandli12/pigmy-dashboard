@@ -11,17 +11,23 @@ import {
   MenuItem,
   FormHelperText,
   Alert,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import Container from '@mui/material/Container';
 import { useForm, Controller } from 'react-hook-form';
-import { addAgentSchema, type AddAgentFormValues } from '../utils/formSchemas';
+import {
+  addAgentSchema,
+  type AddAgentFormInput,
+  type AddAgentFormValues,
+} from '../utils/formSchemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 
 type AgentFormProps = {
-  defaultValues?: AddAgentFormValues | null;
+  defaultValues?: Partial<AddAgentFormValues> | null;
   callback: (data: AddAgentFormValues) => void;
   isUpdate?: boolean;
 };
@@ -36,15 +42,21 @@ function AddAgent({
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<AddAgentFormValues>({
+  } = useForm<AddAgentFormInput, unknown, AddAgentFormValues>({
     resolver: zodResolver(addAgentSchema),
     mode: 'onChange', // better UX
+    defaultValues: {
+      status: 'active',
+    },
   });
   const navigate = useNavigate();
 
   useEffect(() => {
     if (defaultValues) {
-      reset(defaultValues);
+      reset({
+        ...defaultValues,
+        status: defaultValues.status ?? 'active',
+      });
     }
   }, [defaultValues, reset]);
 
@@ -383,6 +395,45 @@ function AddAgent({
                     </Select>
 
                     <FormHelperText>{errors.type?.message}</FormHelperText>
+                  </FormControl>
+                )}
+              />
+            </Box>
+            {/* Agent Status */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#333333',
+                  mb: 1,
+                }}
+              >
+                Status
+              </Typography>
+              <Controller
+                name='status'
+                control={control}
+                render={({ field }) => (
+                  <FormControl error={!!errors.status}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={(field.value ?? 'active') === 'active'}
+                          onChange={(_, checked) =>
+                            field.onChange(checked ? 'active' : 'inactive')
+                          }
+                          onBlur={field.onBlur}
+                          inputRef={field.ref}
+                        />
+                      }
+                      label={
+                        (field.value ?? 'active') === 'active'
+                          ? 'active'
+                          : 'inactive'
+                      }
+                    />
+                    <FormHelperText>{errors.status?.message}</FormHelperText>
                   </FormControl>
                 )}
               />

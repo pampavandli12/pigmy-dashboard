@@ -56,6 +56,7 @@ export const addAgentSchema = z.object({
     error: (iss) =>
       iss.input === undefined ? 'Field is required.' : 'Invalid input.',
   }),
+  status: z.enum(['active', 'inactive']).default('active'),
 
   limitAmount: z.coerce
     .number({
@@ -65,7 +66,8 @@ export const addAgentSchema = z.object({
     .positive('Limit amount must be positive'),
 });
 
-export type AddAgentFormValues = z.infer<typeof addAgentSchema>;
+export type AddAgentFormInput = z.input<typeof addAgentSchema>;
+export type AddAgentFormValues = z.output<typeof addAgentSchema>;
 
 // Create Deposit form validation schema using Zod
 export const createDepositSchema = z.object({
