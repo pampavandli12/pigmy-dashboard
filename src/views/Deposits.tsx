@@ -17,8 +17,6 @@ import {
   type DepositFilterFormValues,
 } from '../utils/formSchemas';
 import dayjs from 'dayjs';
-import { generateDepositDatFile } from '../utils/helpers';
-import { MOCK_DEPOSIT_RESPONSE } from '../utils/constants';
 
 interface FilterBarProps {
   control: any;
@@ -114,6 +112,7 @@ function Deposits() {
     (state) => state.fetchAgentLoadingStatus,
   );
   const fetchAgents = useAgentStore((state) => state.fetchAgents);
+  const exportDepositeById = useAgentStore((state) => state.exportDepositeById);
 
   const {
     control,
@@ -176,9 +175,12 @@ function Deposits() {
           variant='contained'
           color='primary'
           onClick={() => {
-            // Implement export functionality here
-            console.log('Exporting deposit:', params.row);
-            generateDepositDatFile(MOCK_DEPOSIT_RESPONSE);
+            exportDepositeById(
+              params.row.depositId,
+              Number(params.row.agentCode),
+              params.row.depositDate,
+              params.row.totalDepositedAmount,
+            );
           }}
         >
           Export

@@ -12,6 +12,7 @@ import type {
 import {
   createAgent,
   createDeposit,
+  exportDepositById,
   fetchAgentByCode,
   fetchAgents,
   fetchPastDeposits,
@@ -21,11 +22,13 @@ import {
 import { useAlertStore } from './AlertStore';
 import type {
   CreateDepositPayload,
+  CreateDepositResponse,
   PastDeposit,
   TransactionsResponse,
 } from '../types/Agent';
 import { useAuthStore } from './AuthStore';
 import dayjs from 'dayjs';
+import { generateDepositDatFile } from '../utils/helpers';
 
 type State = {
   fetchAgentLoadingStatus: Status;
@@ -38,6 +41,7 @@ type State = {
   fetchTransactionsLoadingStatus: Status;
   createDepositLoadingStatus: Status;
   fetchPastDepositsLoadingStatus: Status;
+  exportDepositLoadingStatus: Status;
   pastDeposits: PastDeposit[];
 };
 
@@ -50,6 +54,12 @@ type Action = {
   updateAgent: (agentCode: string, agentData: AddAgentFormValues) => void;
   setCreateAgentLoadingStatus: (status: Status) => void;
   setUpdateAgentLoadingStatus: (status: Status) => void;
+  exportDepositeById: (
+    depositeId: number,
+    agentCode: number,
+    date: string,
+    depositedAmount: number,
+  ) => void;
   createDeposit: (
     formValues: CreateDepositFormValues,
     agentCode: number,
@@ -72,6 +82,7 @@ export const useAgentStore = create<State & Action>((set) => ({
   selectedAgent: null,
   createDepositLoadingStatus: Status.Idle,
   fetchPastDepositsLoadingStatus: Status.Idle,
+  exportDepositLoadingStatus: Status.Idle,
   pastDeposits: [],
   setSelectedAgent: (agent) => set({ selectedAgent: agent }),
   fetchAgents: async () => {
@@ -177,8 +188,9 @@ export const useAgentStore = create<State & Action>((set) => ({
     };
     console.log('Creating deposit with values:', formValues);
     try {
-      const response = await createDeposit(payload);
+      const response: CreateDepositResponse = await createDeposit(payload);
       console.log('Deposit created successfully:', response);
+      generateDepositDatFile(response);
       set({ createDepositLoadingStatus: Status.Success });
       showAlert(
         true,
@@ -195,6 +207,37 @@ export const useAgentStore = create<State & Action>((set) => ({
         : errorObj.message || 'Unknown error';
       console.error('Failed to create deposit:', errorMessage);
       set({ createDepositLoadingStatus: Status.Error });
+      showAlert(true, errorMessage, 'error');
+    }
+  },
+  exportDepositeById: async (
+    depositeId: number,
+    agentCode: number,
+    date: string,
+    depositedAmount: number,
+  ) => {
+    set({ exportDepositLoadingStatus: Status.Loading });
+    const showAlert = useAlertStore.getState().showAlert;
+    try {
+      const response = await exportDepositById(
+        depositeId,
+        agentCode,
+        date,
+        depositedAmount,
+      );
+      generateDepositDatFile(response);
+      set({ exportDepositLoadingStatus: Status.Success });
+      showAlert(true, 'Deposit exported successfully!', 'success');
+    } catch (error) {
+      const errorObj = error as {
+        response?: { data: string };
+        message?: string;
+      };
+      const errorMessage = errorObj.response?.data
+        ? JSON.parse(errorObj.response.data)?.error || 'Unknown error'
+        : errorObj.message || 'Unknown error';
+      console.error('Failed to export deposit:', errorMessage);
+      set({ exportDepositLoadingStatus: Status.Error });
       showAlert(true, errorMessage, 'error');
     }
   },

@@ -1,6 +1,7 @@
 import { useAuthStore } from '../store/AuthStore';
 import type {
   CreateDepositPayload,
+  CreateDepositResponse,
   PastDepositPayload,
   TransactionsResponse,
 } from '../types/Agent';
@@ -56,7 +57,7 @@ export const fetchTransactions = async (
 };
 export const createDeposit = async (
   payload: CreateDepositPayload,
-): Promise<void> => {
+): Promise<CreateDepositResponse> => {
   return api
     .post(API_URLS.CREATE_DEPOSIT, { ...payload })
     .then((response) => response.data);
@@ -65,6 +66,19 @@ export const fetchPastDeposits = async (paylaod: PastDepositPayload) => {
   return api
     .get(
       `${API_URLS.PAST_DEPOSITS}?agentCode=${paylaod.agentCode}&bankCode=${paylaod.bankCode}&from=${paylaod.fromDate}&to=${paylaod.toDate}`,
+    )
+    .then((response) => response.data);
+};
+export const exportDepositById = async (
+  depositeId: number,
+  agentCode: number,
+  date: string,
+  depositedAmount: number,
+): Promise<CreateDepositResponse> => {
+  const bankCode = useAuthStore.getState().bankCode; // Get bankCode from Zustand store
+  return api
+    .get(
+      `${API_URLS.EXPORT_DEPOSITE_BY_ID}?depositId=${depositeId}&bankCode=${bankCode}&agentCode=${agentCode}&date=${date}&depositedAmount=${depositedAmount}`,
     )
     .then((response) => response.data);
 };

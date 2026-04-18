@@ -24,6 +24,20 @@ export const generateDepositDatFile = (
     String(value).slice(0, width).padEnd(width, ' ');
   const formatNumberColumn = (value: number, width: number): string =>
     String(value).slice(0, width).padStart(width, ' ');
+  const formatZeroPaddedNumberColumn = (value: number, width: number): string =>
+    String(value).slice(0, width).padStart(width, '0');
+
+  const agentInformationRow = [
+    formatColumn('', 4),
+    formatZeroPaddedNumberColumn(depositData.agentCode, 8),
+    formatNumberColumn(depositData.users.length, 6),
+    formatColumn(depositData.totalDepositedAmount, 16),
+    formatZeroPaddedNumberColumn(depositData.agentCode, 6),
+    formatColumn(depositData.depositedDate, 8),
+    formatColumn('12345678', 8),
+  ].join(',');
+
+  lines.push(agentInformationRow);
 
   depositData.users.forEach((user) => {
     const row = [
@@ -33,7 +47,7 @@ export const generateDepositDatFile = (
       formatColumn(user.customerName, 16),
       formatColumn('000000', 6),
       formatColumn(user.collectedDate, 8),
-      formatNumberColumn(user.collectedAmount, 8),
+      formatNumberColumn(user.collectedAmount, 6),
     ].join(',');
 
     lines.push(row);
@@ -44,7 +58,7 @@ export const generateDepositDatFile = (
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `deposit_${depositData.agentCode}_${new Date().getTime()}.dat`;
+  link.download = `pcrx.dat`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

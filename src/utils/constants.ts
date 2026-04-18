@@ -42,6 +42,7 @@ export const API_URLS = {
   USER_ACCOUNTS: '/pigmy/v1/user',
   CREATE_DEPOSIT: '/pigmy/v1/agent/deposit/multipleDate',
   PAST_DEPOSITS: '/pigmy/v1/agent/pastDeposits',
+  EXPORT_DEPOSITE_BY_ID: 'pigmy/v1/agent/export',
 };
 
 export const MOCK_DEPOSIT_RESPONSE: CreateDepositResponse = {

@@ -51,7 +51,7 @@ export default function CreateDepositModal({
   const onSubmit = async (data: CreateDepositFormValues) => {
     console.log(data);
     await createDeposit(data, Number(agentCode));
-    // Handle create deposit logic here
+    onClose();
   };
   const isCreateDepositLoading = React.useMemo(
     () => isAPILoading === Status.Loading,
