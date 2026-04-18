@@ -20,24 +20,22 @@ export const generateDepositDatFile = (
   depositData: CreateDepositResponse,
 ): void => {
   const lines: string[] = [];
+  const formatColumn = (value: string | number, width: number): string =>
+    String(value).slice(0, width).padEnd(width, ' ');
+  const formatNumberColumn = (value: number, width: number): string =>
+    String(value).slice(0, width).padStart(width, ' ');
 
-  // Generate data rows in the format shown in the attached file
-  const emptySchema = '    ';
-  const agentCode = String(depositData.agentCode).padStart(8, '0');
-  const totalRowCount = depositData.users.length;
-  const totalDepositedAmount = depositData.totalDepositedAmount;
-  const agentRow = `${emptySchema},${agentCode},${totalRowCount},${totalDepositedAmount},${depositData.depositedDate},12345678`;
-  lines.push(agentRow);
   depositData.users.forEach((user) => {
-    // Format: schemeId,accountNumber,collectedAmount,customerName,000000,collectedDate,collectedAmount
-    const schemeId = user.schemeId;
-    const accountNumber = String(user.accountNumber).padStart(8, '0');
-    const collectedAmount = user.collectedAmount;
-    const customerName = user.customerName.padEnd(20); // Pad customer name to proper width
-    const zeros = '000000'; // 6 zeros
-    const collectedDate = user.collectedDate;
+    const row = [
+      formatColumn(user.schemeId, 4),
+      String(user.accountNumber).padStart(8, '0'),
+      formatNumberColumn(user.collectedAmount, 6),
+      formatColumn(user.customerName, 16),
+      formatColumn('000000', 6),
+      formatColumn(user.collectedDate, 8),
+      formatNumberColumn(user.collectedAmount, 8),
+    ].join(',');
 
-    const row = `${schemeId},${accountNumber},${collectedAmount},${customerName},${zeros},${collectedDate},${collectedAmount}`;
     lines.push(row);
   });
 
