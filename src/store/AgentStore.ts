@@ -51,7 +51,7 @@ type Action = {
   createAgent: (paylaod: AddAgentFormValues) => void;
   fetchAgentByCode: (agentCode: string) => void;
   setSelectedAgent: (agent: Agent | null) => void;
-  updateAgent: (agentCode: string, agentData: AddAgentFormValues) => void;
+  updateAgent: (agentCode: string, agentData: Partial<Agent>) => void;
   setCreateAgentLoadingStatus: (status: Status) => void;
   setUpdateAgentLoadingStatus: (status: Status) => void;
   exportDepositeById: (
@@ -150,7 +150,7 @@ export const useAgentStore = create<State & Action>((set) => ({
       );
     }
   },
-  updateAgent: async (agentCode: string, agentData: AddAgentFormValues) => {
+  updateAgent: async (agentCode: string, agentData: Partial<Agent>) => {
     set({ updateAgentLoadingStatus: Status.Loading });
     const showAlert = useAlertStore.getState().showAlert;
     try {

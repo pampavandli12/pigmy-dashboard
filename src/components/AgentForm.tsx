@@ -209,8 +209,8 @@ function AddAgent({
                     {...field}
                     name='address'
                     placeholder='Enter Address'
-                    error={!!errors.phone}
-                    helperText={errors.phone?.message}
+                    error={!!errors.address}
+                    helperText={errors.address?.message}
                     variant='outlined'
                     size='medium'
                     sx={{
@@ -241,12 +241,13 @@ function AddAgent({
                   control={control}
                   render={({ field }) => (
                     <TextField
+                      fullWidth
                       {...field}
                       name='password'
                       type='password'
                       placeholder='Enter Password'
-                      error={!!errors.phone}
-                      helperText={errors.phone?.message}
+                      error={!!errors.password}
+                      helperText={errors.password?.message}
                       variant='outlined'
                       size='medium'
                       sx={{
@@ -259,15 +260,6 @@ function AddAgent({
                   )}
                 />
               </Box>
-              <Typography
-                sx={{
-                  fontSize: '12px',
-                  color: '#999999',
-                  mt: 1,
-                }}
-              >
-                A secure password will be automatically generated.
-              </Typography>
             </Box>
 
             {/* Email Field */}

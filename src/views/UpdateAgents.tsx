@@ -48,7 +48,10 @@ export default function UpdateAgents() {
   const handleSubmit = async (data: AddAgentFormValues) => {
     console.log('Form Data to be submitted for update:', data);
     try {
-      await updateAgent(params.agentCode as string, data);
+      await updateAgent(params.agentCode as string, {
+        ...data,
+        id: agentData?.id as number,
+      });
       setTimeout(() => {
         navigate('/agents');
       }, 2500);

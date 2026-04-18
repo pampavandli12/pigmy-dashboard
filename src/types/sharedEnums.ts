@@ -12,7 +12,7 @@ export const Status = {
 export type Status = (typeof Status)[keyof typeof Status];
 
 export type Agent = {
-  id: number;
+  id?: number;
   name: string;
   address: string;
   phone: string;

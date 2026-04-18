@@ -5,6 +5,7 @@ import type {
   PastDepositPayload,
   TransactionsResponse,
 } from '../types/Agent';
+import type { Agent } from '../types/sharedEnums';
 import { API_URLS } from '../utils/constants';
 import type { AddAgentFormValues } from '../utils/formSchemas';
 import { api } from './axios';
@@ -31,7 +32,7 @@ export const fetchAgentByCode = async (agentCode: string) => {
 };
 export const updateAgent = async (
   agentCode: string,
-  agentData: AddAgentFormValues,
+  agentData: Partial<Agent>,
 ) => {
   const bankCode = useAuthStore.getState().bankCode; // Get bankCode from Zustand store
 
