@@ -36,6 +36,11 @@ function Agents() {
     console.log('Navigate to Add Agent page');
     navigate('/agents/addAgent');
   };
+  const getStatusColor = (status: string) => {
+    if (status === 'active') return '#ff6b6b';
+    if (status === 'inactive') return '#ff6b6b';
+    return '#666666';
+  };
   const handleEditAgent = async (agentCode: number) => {
     console.log('Navigate to Edit Agent page for agent code:', agentCode);
     navigate(`/agents/editAgent/${agentCode}`);
@@ -231,15 +236,15 @@ function Agents() {
                 >
                   Block Status
                 </Typography>
-                {/* <Typography
+                <Typography
                   sx={{
-                    fontSize: "13px",
+                    fontSize: '13px',
                     fontWeight: 600,
-                    color: getStatusColor(agent.blockStatus),
+                    color: getStatusColor(agent.status),
                   }}
                 >
-                  {agent.blockStatus}
-                </Typography> */}
+                  {agent.status.toUpperCase()}
+                </Typography>
               </Box>
               <Box>
                 <Typography
