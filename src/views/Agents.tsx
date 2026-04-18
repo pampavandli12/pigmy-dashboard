@@ -26,14 +26,6 @@ function Agents() {
   useEffect(() => {
     fetchAgents();
   }, [fetchAgents]);
-
-  // const getStatusColor = (status: string) => {
-  //   if (status === "Yes") return "#ff6b6b";
-  //   if (status === "No") return "#ff6b6b";
-  //   if (status === "Registered") return "#212121";
-  //   if (status === "Unregistered") return "#999999";
-  //   return "#666666";
-  // };
   const agentInitial = (name: string) => {
     const parts = name.split(' ');
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();

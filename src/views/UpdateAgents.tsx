@@ -27,9 +27,6 @@ export default function UpdateAgents() {
   }, []);
 
   useEffect(() => {
-    console.log('Selected Agent Data:', agentData);
-  }, [agentData]);
-  useEffect(() => {
     if (params.agentCode) {
       const fetchData = async () => {
         try {
