@@ -1,11 +1,11 @@
-import { useEffect } from "react";
-import { useAgentStore } from "../store/AgentStore";
-import { useNavigate, useParams } from "react-router-dom";
-import { Status } from "../types/sharedEnums";
-import { Container } from "@mui/material";
-import AgentForm from "../components/AgentForm";
-import type { AddAgentFormValues } from "../utils/formSchemas";
-import LoadingComponent from "../components/LoadingComponent";
+import { useEffect } from 'react';
+import { useAgentStore } from '../store/AgentStore';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Status } from '../types/sharedEnums';
+import { Container } from '@mui/material';
+import AgentForm from '../components/AgentForm';
+import type { AddAgentFormValues } from '../utils/formSchemas';
+import LoadingComponent from '../components/LoadingComponent';
 
 export default function UpdateAgents() {
   const updateAgent = useAgentStore((state) => state.updateAgent);
@@ -27,12 +27,15 @@ export default function UpdateAgents() {
   }, []);
 
   useEffect(() => {
+    console.log('Selected Agent Data:', agentData);
+  }, [agentData]);
+  useEffect(() => {
     if (params.agentCode) {
       const fetchData = async () => {
         try {
           await fetchAgentByCode(params.agentCode as string);
         } catch (error) {
-          console.error("Failed to fetch agent data:", error);
+          console.error('Failed to fetch agent data:', error);
         }
       };
       fetchData();
@@ -43,13 +46,14 @@ export default function UpdateAgents() {
     return <LoadingComponent />;
   }
   const handleSubmit = async (data: AddAgentFormValues) => {
+    console.log('Form Data to be submitted for update:', data);
     try {
       await updateAgent(params.agentCode as string, data);
       setTimeout(() => {
-        navigate("/agents");
+        navigate('/agents');
       }, 2500);
     } catch (error) {
-      console.error("Failed to update agent:", error);
+      console.error('Failed to update agent:', error);
     }
   };
   return (
@@ -64,6 +68,7 @@ export default function UpdateAgents() {
             limitAmount: agentData?.limitAmount,
             type: agentData?.type,
             agentCode: agentData?.agentCode,
+            password: agentData?.password,
           } as AddAgentFormValues
         }
         callback={(data) => handleSubmit(data)}

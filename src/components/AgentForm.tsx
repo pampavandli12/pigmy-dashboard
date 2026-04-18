@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -11,15 +11,14 @@ import {
   MenuItem,
   FormHelperText,
   Alert,
-} from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import SaveIcon from "@mui/icons-material/Save";
-import Container from "@mui/material/Container";
-import { useForm, Controller } from "react-hook-form";
-import { addAgentSchema, type AddAgentFormValues } from "../utils/formSchemas";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
+import Container from '@mui/material/Container';
+import { useForm, Controller } from 'react-hook-form';
+import { addAgentSchema, type AddAgentFormValues } from '../utils/formSchemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
 
 type AgentFormProps = {
   defaultValues?: AddAgentFormValues | null;
@@ -39,7 +38,7 @@ function AddAgent({
     reset,
   } = useForm<AddAgentFormValues>({
     resolver: zodResolver(addAgentSchema),
-    mode: "onChange", // better UX
+    mode: 'onChange', // better UX
   });
   const navigate = useNavigate();
 
@@ -48,22 +47,6 @@ function AddAgent({
       reset(defaultValues);
     }
   }, [defaultValues, reset]);
-  const handleGeneratePassword = () => {
-    // TODO: will have to revisit
-    // const characters =
-    //   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    // let password = "";
-    // for (let i = 0; i < 15; i++) {
-    //   password += characters.charAt(
-    //     Math.floor(Math.random() * characters.length),
-    //   );
-    // }
-    // Set generated password in form state
-    // setFormData((prev) => ({
-    //   ...prev,
-    //   password,
-    // }));
-  };
 
   const handleCancel = () => {
     // Handle cancel action
@@ -73,38 +56,38 @@ function AddAgent({
   return (
     <Container
       maxWidth={false}
-      sx={{ width: { xs: "100%", md: "70%" }, mx: "auto", py: 6 }}
+      sx={{ width: { xs: '100%', md: '70%' }, mx: 'auto', py: 6 }}
     >
-      <Box sx={{ width: "100%" }}>
+      <Box sx={{ width: '100%' }}>
         {/* Back Link */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 1,
             mb: 3,
-            cursor: "pointer",
-            color: "#666666",
-            fontSize: "14px",
+            cursor: 'pointer',
+            color: '#666666',
+            fontSize: '14px',
             fontWeight: 500,
-            "&:hover": {
-              color: "#333333",
+            '&:hover': {
+              color: '#333333',
             },
           }}
         >
           <IconButton
             onClick={() => navigate(-1)}
-            size="small"
+            size='small'
             sx={{
               p: 0,
               mr: 1,
-              color: "#666666",
-              "&:hover": { backgroundColor: "transparent", color: "#333333" },
+              color: '#666666',
+              '&:hover': { backgroundColor: 'transparent', color: '#333333' },
             }}
-            aria-label="back"
+            aria-label='back'
           >
-            <ArrowBackIcon sx={{ fontSize: "20px" }} /> &nbsp;{" "}
-            <Typography sx={{ fontSize: "14px" }}>
+            <ArrowBackIcon sx={{ fontSize: '20px' }} /> &nbsp;{' '}
+            <Typography sx={{ fontSize: '14px' }}>
               Back to Agent Management
             </Typography>
           </IconButton>
@@ -112,10 +95,10 @@ function AddAgent({
 
         {/* Header */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+          <Typography variant='h4' sx={{ fontWeight: 700, mb: 1 }}>
             Add New Agent
           </Typography>
-          <Typography sx={{ color: "#666666", fontSize: "15px" }}>
+          <Typography sx={{ color: '#666666', fontSize: '15px' }}>
             Fill in the details below to create a new agent account.
           </Typography>
         </Box>
@@ -125,43 +108,43 @@ function AddAgent({
           elevation={1}
           sx={{
             padding: 4,
-            borderRadius: "12px",
+            borderRadius: '12px',
           }}
         >
           <Box
-            component="form"
+            component='form'
             onSubmit={handleSubmit(callback)}
             noValidate
-            sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
           >
             {/* Name Field */}
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
                 Name
               </Typography>
               <Controller
-                name="name"
+                name='name'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     fullWidth
                     {...field}
-                    name="name"
-                    placeholder="e.g., John Doe"
+                    name='name'
+                    placeholder='e.g., John Doe'
                     error={!!errors.name}
                     helperText={errors.name?.message}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
                       },
                     }}
                   />
@@ -173,31 +156,31 @@ function AddAgent({
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
                 Phone
               </Typography>
               <Controller
-                name="phone"
+                name='phone'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     fullWidth
                     {...field}
-                    name="phone"
-                    type="number"
-                    placeholder="Enter phone number"
+                    name='phone'
+                    type='number'
+                    placeholder='Enter phone number'
                     error={!!errors.phone}
                     helperText={errors.phone?.message}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
                       },
                     }}
                   />
@@ -209,30 +192,30 @@ function AddAgent({
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
                 Address
               </Typography>
               <Controller
-                name="address"
+                name='address'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     fullWidth
                     {...field}
-                    name="address"
-                    placeholder="Enter Address"
+                    name='address'
+                    placeholder='Enter Address'
                     error={!!errors.phone}
                     helperText={errors.phone?.message}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
                       },
                     }}
                   />
@@ -244,59 +227,42 @@ function AddAgent({
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
                 Password
               </Typography>
-              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <Controller
-                  name="password"
+                  name='password'
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      name="password"
-                      type="password"
-                      placeholder="Enter Password"
+                      name='password'
+                      type='password'
+                      placeholder='Enter Password'
                       error={!!errors.phone}
                       helperText={errors.phone?.message}
-                      variant="outlined"
-                      size="medium"
+                      variant='outlined'
+                      size='medium'
                       sx={{
                         flex: 1,
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "6px",
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '6px',
                         },
                       }}
                     />
                   )}
                 />
-                <Button
-                  onClick={handleGeneratePassword}
-                  variant="contained"
-                  startIcon={<RefreshIcon />}
-                  sx={{
-                    backgroundColor: "#f0f0f0",
-                    color: "#333333",
-                    textTransform: "none",
-                    fontWeight: 600,
-                    borderRadius: "6px",
-                    boxShadow: "none",
-                    "&:hover": { backgroundColor: "#e6e6e6" },
-                    height: "40px",
-                  }}
-                >
-                  Generate
-                </Button>
               </Box>
               <Typography
                 sx={{
-                  fontSize: "12px",
-                  color: "#999999",
+                  fontSize: '12px',
+                  color: '#999999',
                   mt: 1,
                 }}
               >
@@ -309,30 +275,30 @@ function AddAgent({
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
                 Email
               </Typography>
               <Controller
-                name="email"
+                name='email'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     fullWidth
                     {...field}
-                    name="email"
-                    placeholder="Enter Email"
+                    name='email'
+                    placeholder='Enter Email'
                     error={!!errors.email}
                     helperText={errors.email?.message}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
                       },
                     }}
                   />
@@ -344,32 +310,32 @@ function AddAgent({
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
                 Agent Code
               </Typography>
               <Controller
-                name="agentCode"
+                name='agentCode'
                 control={control}
                 disabled={isUpdate} // Disable agent code input during update
                 render={({ field }) => (
                   <TextField
                     fullWidth
                     {...field}
-                    name="agentCode"
-                    type="number"
-                    placeholder="Enter Agent Code"
+                    name='agentCode'
+                    type='number'
+                    placeholder='Enter Agent Code'
                     error={!!errors.agentCode}
                     helperText={errors.agentCode?.message}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
                       },
                     }}
                   />
@@ -380,9 +346,9 @@ function AddAgent({
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
@@ -390,23 +356,23 @@ function AddAgent({
               </Typography>
 
               <Controller
-                name="type"
+                name='type'
                 control={control}
                 render={({ field }) => (
                   <FormControl fullWidth error={!!errors.type}>
                     <Select
                       {...field}
-                      value={field.value || ""}
+                      value={field.value || ''}
                       displayEmpty
                       readOnly={isUpdate} // Disable type selection during update
-                      size="medium"
+                      size='medium'
                       sx={{
-                        borderRadius: "6px",
+                        borderRadius: '6px',
                       }}
                       renderValue={(selected) => {
                         if (!selected) {
                           return (
-                            <span style={{ color: "#9e9e9e" }}>
+                            <span style={{ color: '#9e9e9e' }}>
                               Select Type
                             </span>
                           );
@@ -416,12 +382,12 @@ function AddAgent({
                         );
                       }}
                     >
-                      <MenuItem value="" disabled>
+                      <MenuItem value='' disabled>
                         Select Type
                       </MenuItem>
 
-                      <MenuItem value="agent">agent</MenuItem>
-                      <MenuItem value="employee">employee</MenuItem>
+                      <MenuItem value='agent'>agent</MenuItem>
+                      <MenuItem value='employee'>employee</MenuItem>
                     </Select>
 
                     <FormHelperText>{errors.type?.message}</FormHelperText>
@@ -433,30 +399,30 @@ function AddAgent({
             <Box>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   mb: 1,
                 }}
               >
                 Limit Amount
               </Typography>
               <Controller
-                name="limitAmount"
+                name='limitAmount'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     fullWidth
                     {...field}
-                    name="limitAmount"
-                    placeholder="Enter Limit Amount"
+                    name='limitAmount'
+                    placeholder='Enter Limit Amount'
                     error={!!errors.limitAmount}
                     helperText={errors.limitAmount?.message}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
                       },
                     }}
                   />
@@ -466,53 +432,53 @@ function AddAgent({
             {/* Action Buttons */}
             <Box
               sx={{
-                display: "flex",
+                display: 'flex',
                 gap: 2,
-                justifyContent: "flex-end",
+                justifyContent: 'flex-end',
                 mt: 2,
               }}
             >
               <Button
-                variant="outlined"
+                variant='outlined'
                 onClick={handleCancel}
                 sx={{
-                  color: "#333333",
-                  borderColor: "#e0e0e0",
-                  textTransform: "none",
+                  color: '#333333',
+                  borderColor: '#e0e0e0',
+                  textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: "14px",
+                  fontSize: '14px',
                   px: 3,
                   py: 1,
-                  "&:hover": {
-                    backgroundColor: "#f5f5f5",
-                    borderColor: "#d0d0d0",
+                  '&:hover': {
+                    backgroundColor: '#f5f5f5',
+                    borderColor: '#d0d0d0',
                   },
                 }}
               >
                 Cancel
               </Button>
               <Button
-                variant="contained"
-                type="submit"
+                variant='contained'
+                type='submit'
                 startIcon={<SaveIcon />}
                 disabled={isSubmitting}
                 sx={{
-                  backgroundColor: "#1976d2",
-                  color: "#ffffff",
-                  textTransform: "none",
+                  backgroundColor: '#1976d2',
+                  color: '#ffffff',
+                  textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: "14px",
+                  fontSize: '14px',
                   px: 3,
                   py: 1,
-                  "&:hover": {
-                    backgroundColor: "#1565c0",
+                  '&:hover': {
+                    backgroundColor: '#1565c0',
                   },
                 }}
               >
                 Save
               </Button>
               {errors.root && (
-                <Alert sx={{ marginBottom: 2 }} severity="warning">
+                <Alert sx={{ marginBottom: 2 }} severity='warning'>
                   {errors.root.message}
                 </Alert>
               )}

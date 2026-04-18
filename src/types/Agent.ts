@@ -33,3 +33,19 @@ export interface PastDepositPayload {
   toDate: string;
   bankCode: string;
 }
+
+export interface DepositCollection {
+  schemeId: string;
+  accountNumber: number;
+  collectedAmount: number;
+  customerName: string;
+  collectedDate: string;
+}
+
+export interface CreateDepositResponse {
+  agentCode: number;
+  bankCode: string;
+  totalDepositedAmount: number;
+  depositedDate: string;
+  users: DepositCollection[];
+}
