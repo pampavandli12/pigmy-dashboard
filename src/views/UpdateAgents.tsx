@@ -24,7 +24,7 @@ export default function UpdateAgents() {
 
   useEffect(() => {
     setUpdateAgentLoadingStatus(Status.Idle);
-  }, []);
+  }, [setUpdateAgentLoadingStatus]);
 
   useEffect(() => {
     if (params.agentCode) {

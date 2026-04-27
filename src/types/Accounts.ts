@@ -11,3 +11,17 @@ export interface Account {
 
 export type AccountsResponse = Account[];
 export type AccountFetchResponse = Array<Account & { agentName: string }>;
+export type UploadUserAccountPayload = {
+  agentCode: number;
+  bankCode: string;
+  users: Array<
+    Pick<
+      Account,
+      | "schemeId"
+      | "accountNumber"
+      | "customerName"
+      | "currentBalance"
+      | "lastDepositDate"
+    >
+  >;
+};

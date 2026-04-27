@@ -16,7 +16,7 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { DataGrid } from "@mui/x-data-grid";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
-import type { Account } from "../types/Accounts";
+import type { UploadUserAccountPayload } from "../types/Accounts";
 import { useAuthStore } from "../store/AuthStore";
 import { Status } from "../types/sharedEnums";
 import { useAccountStore } from "../store/AccountStore";
@@ -94,30 +94,29 @@ function AccountsView() {
       if (!content || typeof content !== "string") return;
       const lines = content.split("\n");
       const [agent, ...users] = lines;
-      const userList: Account[] = [];
+      const userList: UploadUserAccountPayload["users"] = [];
       users.forEach((element) => {
         const [
           schemeId,
           accountNumber,
-          _,
+          ,
           customerName,
           currentBalance,
           lastDepositDate,
-          ...rest
         ] = element.split(",");
         if (!accountNumber || !customerName) return; // skip invalid lines
         userList.push({
           schemeId,
-          accountNumber,
+          accountNumber: Number(accountNumber),
           customerName,
-          currentBalance,
+          currentBalance: Number(currentBalance),
           lastDepositDate,
         });
       });
-      const [temp, agentCode, ..._] = agent.split(",");
+      const [, agentCode] = agent.split(",");
       await uploadUserAccount({
         agentCode: Number(agentCode),
-        bankCode,
+        bankCode: bankCode || "",
         users: userList,
       });
     };

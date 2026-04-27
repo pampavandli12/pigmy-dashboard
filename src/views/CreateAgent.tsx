@@ -16,7 +16,7 @@ export default function CreateAgent() {
 
   useEffect(() => {
     setCreateAgentLoadingStatus(Status.Idle);
-  }, []);
+  }, [setCreateAgentLoadingStatus]);
   const handleSubmit = async (data: AddAgentFormValues) => {
     try {
       await createAgent(data);

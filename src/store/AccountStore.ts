@@ -2,18 +2,21 @@ import { create } from "zustand";
 import { fetchUserAccounts, uploadUserAccount } from "../services/account";
 import { useAlertStore } from "./AlertStore";
 import { Severity, Status } from "../types/sharedEnums";
-import type { AccountFetchResponse, AccountsResponse } from "../types/Accounts";
+import type {
+  AccountFetchResponse,
+  UploadUserAccountPayload,
+} from "../types/Accounts";
 import { mapAccountsToAgents } from "../utils/helpers";
 import { useAgentStore } from "./AgentStore";
 
 interface AccountState {
   uploadUserAccountStatus: Status;
-  uploadUserAccount: (accountData: FormData) => Promise<void>;
+  uploadUserAccount: (accountData: UploadUserAccountPayload) => Promise<void>;
   userAccounts: AccountFetchResponse;
   userAccountsLoadingStatus: Status;
 }
 type Action = {
-  uploadUserAccount: (accountData: FormData) => Promise<void>;
+  uploadUserAccount: (accountData: UploadUserAccountPayload) => Promise<void>;
   fetchUserAccounts: () => Promise<void>;
 };
 export const useAccountStore = create<AccountState & Action>((set) => ({
@@ -43,7 +46,7 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
         "User accounts fetched successfully.",
         Severity.Success,
       );
-    } catch (e) {
+    } catch {
       set({ userAccountsLoadingStatus: Status.Error });
       const alertStore = useAlertStore.getState();
       alertStore.showAlert(
@@ -53,7 +56,7 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
       );
     }
   },
-  uploadUserAccount: async (accountData: any) => {
+  uploadUserAccount: async (accountData: UploadUserAccountPayload) => {
     const alertStore = useAlertStore.getState();
     set({ uploadUserAccountStatus: Status.Loading });
 
@@ -65,7 +68,7 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
         "Customers are added successfully...",
         Severity.Success,
       );
-    } catch (e) {
+    } catch {
       set({ uploadUserAccountStatus: Status.Error });
       alertStore.showAlert(
         true,
