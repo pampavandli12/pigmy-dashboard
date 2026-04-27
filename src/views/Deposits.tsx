@@ -9,7 +9,12 @@ import NoRowsOverlay from '../components/NoRowsOverlay';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import type { SubmitHandler } from 'react-hook-form';
+import type {
+  Control,
+  FieldErrors,
+  SubmitHandler,
+  UseFormHandleSubmit,
+} from 'react-hook-form';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -19,10 +24,10 @@ import {
 import dayjs from 'dayjs';
 
 interface FilterBarProps {
-  control: any;
-  handleSubmit: any;
-  onFilterSubmit: any;
-  errors: any;
+  control: Control<DepositFilterFormValues>;
+  handleSubmit: UseFormHandleSubmit<DepositFilterFormValues>;
+  onFilterSubmit: SubmitHandler<DepositFilterFormValues>;
+  errors: FieldErrors<DepositFilterFormValues>;
 }
 
 const FilterBar = ({
