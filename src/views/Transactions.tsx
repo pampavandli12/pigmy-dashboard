@@ -140,7 +140,7 @@ function Transactions() {
         <Box sx={{ width: '100%' }}>
           <DataGrid
             autoHeight
-            rows={transactions}
+            rows={transactions as unknown as TransactionRow[]}
             columns={columns}
             loading={isTransactionLoading}
             getRowId={(row) => row.trasactionId}
