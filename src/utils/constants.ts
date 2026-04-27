@@ -11,9 +11,7 @@ type Environment = 'development' | 'staging' | 'production';
 const getConfig = (env: Environment): AppConfig => {
   const configs: Record<Environment, AppConfig> = {
     development: {
-      // apiDomain:
-      //   "https://uncontrastively-nondyspeptical-mabelle.ngrok-free.dev",
-      apiDomain: 'http://localhost:1002',
+      apiDomain: 'https://pigmyapp-jomt.onrender.com',
       apiTimeout: 30000,
       logLevel: 'debug',
     },
