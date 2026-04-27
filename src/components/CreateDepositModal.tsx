@@ -6,7 +6,12 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { useForm, Controller } from 'react-hook-form';
+import {
+  useForm,
+  Controller,
+  type SubmitHandler,
+  type Resolver,
+} from 'react-hook-form';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -38,7 +43,9 @@ export default function CreateDepositModal({
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CreateDepositFormValues>({
-    resolver: zodResolver(createDepositSchema),
+    resolver: zodResolver(
+      createDepositSchema,
+    ) as Resolver<CreateDepositFormValues>,
     mode: 'onChange', // better UX
   });
   const isAPILoading = useAgentStore(
@@ -48,7 +55,7 @@ export default function CreateDepositModal({
   const handleClose = () => {
     onClose();
   };
-  const onSubmit = async (data: CreateDepositFormValues) => {
+  const onSubmit: SubmitHandler<CreateDepositFormValues> = async (data) => {
     console.log(data);
     await createDeposit(data, Number(agentCode));
     onClose();
