@@ -13,7 +13,7 @@ const getConfig = (env: Environment): AppConfig => {
     development: {
       // apiDomain:
       //   "https://uncontrastively-nondyspeptical-mabelle.ngrok-free.dev",
-      apiDomain: 'http://localhost:1002',
+      apiDomain: 'http://localhost:8080',
       apiTimeout: 30000,
       logLevel: 'debug',
     },
@@ -43,6 +43,7 @@ export const API_URLS = {
   CREATE_DEPOSIT: '/pigmy/v1/agent/deposit/multipleDate',
   PAST_DEPOSITS: '/pigmy/v1/agent/pastDeposits',
   EXPORT_DEPOSITE_BY_ID: 'pigmy/v1/agent/export',
+  UPDATE_PHONE: '/pigmy/v1/user/upload/mobilenumbers',
 };
 
 export const MOCK_DEPOSIT_RESPONSE: CreateDepositResponse = {

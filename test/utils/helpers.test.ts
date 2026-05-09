@@ -1,6 +1,37 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as XLSX from 'xlsx';
 import { MOCK_DEPOSIT_RESPONSE } from '../../src/utils/constants';
-import { generateDepositDatFile, mapAccountsToAgents } from '../../src/utils/helpers';
+import {
+  generateDepositDatFile,
+  mapAccountsToAgents,
+  parseCSVFile,
+} from '../../src/utils/helpers';
+
+class FileReaderMock {
+  onerror: (() => void) | null = null;
+  onload: ((event: { target: { result: ArrayBuffer } }) => void) | null = null;
+
+  readAsArrayBuffer(file: File) {
+    file.arrayBuffer().then(
+      (result) => this.onload?.({ target: { result } }),
+      () => this.onerror?.(),
+    );
+  }
+}
+
+const createWorkbookFile = (
+  rows: Record<string, string | number>[],
+  fileName = 'phone-numbers.xlsx',
+) => {
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+  const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+  return new File([buffer], fileName, {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+};
 
 describe('helpers', () => {
   afterEach(() => {
@@ -87,5 +118,44 @@ describe('helpers', () => {
     expect(removeChild).toHaveBeenCalledWith(link);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:deposit');
   });
-});
 
+  it('parses phone number data from an XLSX file', async () => {
+    vi.stubGlobal('FileReader', FileReaderMock);
+
+    await expect(
+      parseCSVFile(
+        createWorkbookFile([
+          { Mobile1: '9876543210', AccountNumber: 101 },
+          { Mobile1: '9876543211', AccountNumber: 102 },
+        ]),
+      ),
+    ).resolves.toEqual([
+      { mobilenumber: '9876543210', accountNumber: 101 },
+      { mobilenumber: '9876543211', accountNumber: 102 },
+    ]);
+  });
+
+  it('rejects non-XLSX phone number files', async () => {
+    await expect(
+      parseCSVFile(new File(['Mobile1,AccountNumber'], 'phone-numbers.csv')),
+    ).rejects.toThrow('Please upload a valid XLSX file.');
+  });
+
+  it('rejects empty XLSX phone number files', async () => {
+    vi.stubGlobal('FileReader', FileReaderMock);
+
+    await expect(parseCSVFile(createWorkbookFile([]))).rejects.toThrow(
+      'The XLSX file should have some data.',
+    );
+  });
+
+  it('rejects XLSX phone number files without required columns', async () => {
+    vi.stubGlobal('FileReader', FileReaderMock);
+
+    await expect(
+      parseCSVFile(createWorkbookFile([{ Mobile1: '9876543210' }])),
+    ).rejects.toThrow(
+      'The XLSX file should include AccountNumber column.',
+    );
+  });
+});

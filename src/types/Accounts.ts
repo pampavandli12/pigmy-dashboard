@@ -17,11 +17,20 @@ export type UploadUserAccountPayload = {
   users: Array<
     Pick<
       Account,
-      | "schemeId"
-      | "accountNumber"
-      | "customerName"
-      | "currentBalance"
-      | "lastDepositDate"
+      | 'schemeId'
+      | 'accountNumber'
+      | 'customerName'
+      | 'currentBalance'
+      | 'lastDepositDate'
     >
   >;
+};
+
+export type ParsedPhoneNumberRow = {
+  accountNumber: number;
+  mobilenumber: number;
+};
+export type AccountUpdatePayload = {
+  bankCode: String;
+  userDetailsList: Array<ParsedPhoneNumberRow>;
 };
