@@ -5,6 +5,7 @@ export interface Account {
   customerName: string;
   currentBalance: number;
   lastDepositDate: string;
+  mobilenumber?: number | string;
   agentCode?: number;
   bankCode: string;
 }
@@ -31,6 +32,6 @@ export type ParsedPhoneNumberRow = {
   mobilenumber: number;
 };
 export type AccountUpdatePayload = {
-  bankCode: String;
+  bankCode: string;
   userDetailsList: Array<ParsedPhoneNumberRow>;
 };

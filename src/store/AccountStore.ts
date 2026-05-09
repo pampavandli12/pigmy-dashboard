@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   fetchUserAccounts,
   updateUserAccounts,
+  UpdateUserPhoneNumber,
   uploadUserAccount,
 } from '../services/account';
 import { useAlertStore } from './AlertStore';
@@ -27,6 +28,10 @@ type Action = {
   uploadUserAccount: (accountData: UploadUserAccountPayload) => Promise<void>;
   fetchUserAccounts: () => Promise<void>;
   updateUserAccounts: (accounts: ParsedPhoneNumberRow[]) => Promise<void>;
+  updateUserPhoneNumber: (
+    updateMobileNumber: string,
+    userId: number,
+  ) => Promise<void>;
 };
 export const useAccountStore = create<AccountState & Action>((set) => ({
   uploadUserAccountStatus: Status.Idle,
@@ -111,5 +116,26 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
       set({ userPhoneNumberUpdateStatus: Status.Error });
     }
     // Here you would typically make an API call to update the accounts with the new phone numbers
+  },
+  updateUserPhoneNumber: async (updateMobileNumber: string, userId: string) => {
+    const alertStore = useAlertStore.getState();
+    set({ userAccountsLoadingStatus: Status.Loading });
+    try {
+      await UpdateUserPhoneNumber(updateMobileNumber, userId);
+      await fetchUserAccounts(); // Refresh accounts after updating phone number
+      set({ userAccountsLoadingStatus: Status.Success });
+      alertStore.showAlert(
+        true,
+        'Phone number updated successfully.',
+        Severity.Success,
+      );
+    } catch {
+      alertStore.showAlert(
+        true,
+        'Failed to update phone number. Please try again.',
+        Severity.Error,
+      );
+      set({ userAccountsLoadingStatus: Status.Error });
+    }
   },
 }));

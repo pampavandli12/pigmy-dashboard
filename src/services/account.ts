@@ -27,3 +27,10 @@ export const updateUserAccounts = async (
     .post(API_URLS.UPDATE_PHONE, payload)
     .then((response) => response.data);
 };
+export const UpdateUserPhoneNumber = async (
+  updateMobileNumber: string,
+  userId: number,
+): Promise<unknown> => {
+  const url = `${API_URLS.UPDATE_PHONY_BY_ACCOUNT}?userId=${userId}&updateMobileNumber=${updateMobileNumber}`;
+  return api.patch(url).then((response) => response.data);
+};

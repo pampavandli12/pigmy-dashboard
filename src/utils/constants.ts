@@ -44,6 +44,7 @@ export const API_URLS = {
   PAST_DEPOSITS: '/pigmy/v1/agent/pastDeposits',
   EXPORT_DEPOSITE_BY_ID: 'pigmy/v1/agent/export',
   UPDATE_PHONE: '/pigmy/v1/user/upload/mobilenumbers',
+  UPDATE_PHONY_BY_ACCOUNT: '/pigmy/v1/user/updateMobileNumber',
 };
 
 export const MOCK_DEPOSIT_RESPONSE: CreateDepositResponse = {

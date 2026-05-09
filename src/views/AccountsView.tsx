@@ -16,13 +16,17 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
-import type { UploadUserAccountPayload } from '../types/Accounts';
+import type {
+  AccountFetchResponse,
+  UploadUserAccountPayload,
+} from '../types/Accounts';
 import { useAuthStore } from '../store/AuthStore';
-import { Status } from '../types/sharedEnums';
+import { Severity, Status } from '../types/sharedEnums';
 import { useAccountStore } from '../store/AccountStore';
 import { useAgentStore } from '../store/AgentStore';
 import NoRowsOverlay from '../components/NoRowsOverlay';
 import { parseCSVFile } from '../utils/helpers';
+import { useAlertStore } from '../store/AlertStore';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -36,28 +40,14 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-const columns: GridColDef[] = [
-  {
-    field: 'customerName',
-    headerName: 'Customer Name',
-    flex: 1,
-    minWidth: 180,
-  },
-  { field: 'accountNumber', headerName: 'Account Number', width: 160 },
-  {
-    field: 'currentBalance',
-    headerName: 'Current Balance',
-    width: 150,
-  },
-  {
-    field: 'mobilenumber',
-    headerName: 'Phone Number',
-    width: 160,
-    editable: true,
-  },
-  { field: 'lastDepositDate', headerName: 'Deposit Date', width: 140 },
-  { field: 'agentName', headerName: 'Agent Name', flex: 1, minWidth: 140 },
-];
+type AccountRow = AccountFetchResponse[number];
+
+const PHONE_NUMBER_ERROR_MESSAGE = 'Phone number must be 10 digits.';
+
+const normalizePhoneNumber = (value: unknown) => String(value ?? '').trim();
+
+const isValidPhoneNumber = (value: unknown) =>
+  /^\d{10}$/.test(normalizePhoneNumber(value));
 
 function AccountsView() {
   const [agentFilter, setAgentFilter] = useState<string[]>([]);
@@ -76,6 +66,10 @@ function AccountsView() {
   );
   const userPhoneNumberUpdateStatus = useAccountStore(
     (state) => state.userPhoneNumberUpdateStatus,
+  );
+  const showAlert = useAlertStore((state) => state.showAlert);
+  const updateUserPhoneNumber = useAccountStore(
+    (state) => state.updateUserPhoneNumber,
   );
 
   const agents = useAgentStore((state) => state.agents);
@@ -137,10 +131,12 @@ function AccountsView() {
   };
   const handlePhoneNumberUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const parsedData = await parseCSVFile(file);
-    await updateUserAccounts(parsedData);
-    console.log('Parsed phone number data:', parsedData);
-    e.target.files = null; // reset the file input
+    try {
+      const parsedData = await parseCSVFile(file);
+      await updateUserAccounts(parsedData);
+    } finally {
+      e.target.value = '';
+    }
   };
   const isUploading = useMemo(
     () => uploadUserAccountLoading === Status.Loading,
@@ -156,9 +152,60 @@ function AccountsView() {
     () => userPhoneNumberUpdateStatus === Status.Loading,
     [userPhoneNumberUpdateStatus],
   );
-  const handlePhoneNumberUpdate = (event) => {
-    console.log('Phone number update event:', event);
+  const handlePhoneNumberUpdate = async (
+    updatedRow: AccountRow,
+    originalRow: AccountRow,
+  ) => {
+    const mobileNumber = normalizePhoneNumber(updatedRow.mobilenumber);
+
+    if (!isValidPhoneNumber(mobileNumber)) {
+      showAlert(true, PHONE_NUMBER_ERROR_MESSAGE, Severity.Error);
+      throw new Error(PHONE_NUMBER_ERROR_MESSAGE);
+    }
+
+    if (mobileNumber === normalizePhoneNumber(originalRow.mobilenumber)) {
+      return originalRow;
+    }
+
+    console.log('Updated phone number:', {
+      accountNumber: updatedRow.accountNumber,
+      previousMobileNumber: normalizePhoneNumber(originalRow.mobilenumber),
+      mobilenumber: mobileNumber,
+    });
+
+    await updateUserPhoneNumber(mobileNumber, updatedRow.userId);
   };
+
+  const columns = useMemo<GridColDef<AccountRow>[]>(
+    () => [
+      {
+        field: 'customerName',
+        headerName: 'Customer Name',
+        flex: 1,
+        minWidth: 180,
+      },
+      { field: 'accountNumber', headerName: 'Account Number', width: 160 },
+      {
+        field: 'currentBalance',
+        headerName: 'Current Balance',
+        width: 150,
+      },
+      {
+        field: 'mobilenumber',
+        headerName: 'Phone Number',
+        width: 160,
+        editable: true,
+        renderCell: (params) => params.value || 'N/A',
+        preProcessEditCellProps: (params) => ({
+          ...params.props,
+          error: !isValidPhoneNumber(params.props.value),
+        }),
+      },
+      { field: 'lastDepositDate', headerName: 'Deposit Date', width: 140 },
+      { field: 'agentName', headerName: 'Agent Name', flex: 1, minWidth: 140 },
+    ],
+    [],
+  );
   return (
     <Box sx={{ width: '100%' }}>
       <Box
@@ -266,11 +313,8 @@ function AccountsView() {
               loading={isUserAccountsLoading}
               showToolbar
               paginationMode='client'
-              onCellEditStop={(params, event) => {
-                if (params.field === 'mobilenumber') {
-                  handlePhoneNumberUpdate(event);
-                }
-              }}
+              processRowUpdate={handlePhoneNumberUpdate}
+              onProcessRowUpdateError={() => undefined}
               slots={{
                 noRowsOverlay: () => (
                   <NoRowsOverlay message='No accounts found. Please upload accounts to view them here.' />
