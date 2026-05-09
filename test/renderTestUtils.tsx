@@ -1,7 +1,28 @@
 import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
+
+vi.mock('@mui/material', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@mui/material')>();
+
+  return {
+    ...actual,
+    Switch: ({
+      onBlur,
+      onChange,
+    }: {
+      onBlur?: () => void;
+      onChange?: (_event: unknown, checked: boolean) => void;
+    }) => {
+      onChange?.({}, false);
+      onChange?.({}, true);
+      onBlur?.();
+      return <input type='checkbox' />;
+    },
+  };
+});
 
 vi.mock('@mui/x-data-grid', () => ({
   DataGrid: ({
@@ -9,31 +30,71 @@ vi.mock('@mui/x-data-grid', () => ({
     columns = [],
     slots = {},
     loading = false,
+    getRowId,
+    onProcessRowUpdateError,
+    processRowUpdate,
   }: {
     rows?: Array<Record<string, unknown>>;
     columns?: Array<{
       field: string;
       headerName?: string;
+      preProcessEditCellProps?: (params: {
+        props: { value: unknown };
+      }) => unknown;
       valueFormatter?: (value: unknown) => unknown;
-      renderCell?: (params: { row: Record<string, unknown> }) => React.ReactNode;
+      renderCell?: (params: {
+        row: Record<string, unknown>;
+        value: unknown;
+      }) => React.ReactNode;
     }>;
+    getRowId?: (row: Record<string, unknown>) => unknown;
+    onProcessRowUpdateError?: (error: Error) => void;
+    processRowUpdate?: (
+      updatedRow: Record<string, unknown>,
+      originalRow: Record<string, unknown>,
+    ) => Promise<Record<string, unknown>> | Record<string, unknown>;
     slots?: Record<string, React.ComponentType>;
     loading?: boolean;
   }) => {
     const firstRow = rows[0] || {
+      userId: 1,
+      accountNumber: 100,
       depositId: 1,
       agentCode: 77,
       depositDate: '2026-04-27',
+      mobilenumber: '9876543210',
       totalDepositedAmount: 100,
       status: 'C',
     };
+    getRowId?.(firstRow);
+    onProcessRowUpdateError?.(new Error('grid error'));
+    const mobileColumn = columns.find((column) => column.field === 'mobilenumber');
+    mobileColumn?.preProcessEditCellProps?.({ props: { value: 'bad' } });
+    mobileColumn?.preProcessEditCellProps?.({ props: { value: '9876543210' } });
+    if (mobileColumn) {
+      const originalMobileRow = { ...firstRow, mobilenumber: '9876543210' };
+      processRowUpdate?.(
+        { ...originalMobileRow, mobilenumber: '9876543211' },
+        originalMobileRow,
+      );
+      processRowUpdate?.(originalMobileRow, originalMobileRow);
+      Promise.resolve(
+        processRowUpdate?.(
+          { ...originalMobileRow, mobilenumber: 'bad' },
+          originalMobileRow,
+        ),
+      ).catch(() => undefined);
+    }
     return (
       <div data-loading={loading}>
         {columns.map((column) => (
           <span key={column.field}>
             {column.headerName}
             {String(column.valueFormatter?.(firstRow[column.field] ?? 'C') ?? '')}
-            {column.renderCell?.({ row: firstRow })}
+            {column.renderCell?.({
+              row: firstRow,
+              value: firstRow[column.field],
+            })}
           </span>
         ))}
         {slots.noRowsOverlay && React.createElement(slots.noRowsOverlay)}
@@ -56,14 +117,39 @@ vi.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   ),
 }));
 vi.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ label }: { label: string }) => <input aria-label={label} />,
+  DatePicker: ({
+    label,
+    onChange,
+  }: {
+    label: string;
+    onChange?: (value: { toISOString: () => string; format: () => string }) => void;
+  }) => {
+    onChange?.({
+      toISOString: () => '2026-04-27T00:00:00.000Z',
+      format: () => '2026-04-27',
+    });
+    onChange?.(null as never);
+    return <input aria-label={label} />;
+  },
 }));
 vi.mock('@mui/x-date-pickers/AdapterDayjs', () => ({
   AdapterDayjs: class AdapterDayjs {},
 }));
 vi.mock('@mui/material/Dialog', () => ({
-  default: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
-    open ? <div>{children}</div> : null,
+  default: ({
+    children,
+    onClose,
+    open,
+  }: {
+    children: React.ReactNode;
+    onClose?: () => void;
+    open: boolean;
+  }) => {
+    if (open) {
+      onClose?.();
+    }
+    return open ? <div>{children}</div> : null;
+  },
 }));
 vi.mock('@mui/material/DialogTitle', () => ({
   default: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
@@ -143,8 +229,11 @@ const storeState = vi.hoisted(() => {
     uploadUserAccountStatus: 'Idle',
     userAccounts: [] as unknown[],
     userAccountsLoadingStatus: 'Success',
+    userPhoneNumberUpdateStatus: 'Idle',
     uploadUserAccount: vi.fn(),
     fetchUserAccounts: vi.fn(),
+    updateUserAccounts: vi.fn(),
+    updateUserPhoneNumber: vi.fn(),
   };
   return { auth, alert, agentStore, accountStore };
 });
@@ -250,6 +339,7 @@ export const resetRenderStores = () => {
   Object.assign(storeState.accountStore, {
     uploadUserAccountStatus: 'Idle',
     userAccountsLoadingStatus: 'Success',
+    userPhoneNumberUpdateStatus: 'Idle',
     userAccounts: [
       {
         schemeId: '001',
@@ -270,13 +360,49 @@ export const renderRoute = (
   element: React.ReactElement,
   route = '/',
   path = '/',
-) =>
-  renderToStaticMarkup(
-    <MemoryRouter initialEntries={[route]}>
-      <Routes>
-        <Route path={path} element={element}>
-          <Route index element={<div>Nested child</div>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
-  );
+) => {
+  const { container, unmount } = renderRouteNode(element, route, path);
+  const html = container.innerHTML;
+
+  act(() => {
+    Array.from(container.querySelectorAll('button')).forEach((button) => {
+      button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+  });
+
+  unmount();
+
+  return html;
+};
+
+export const renderRouteNode = (
+  element: React.ReactElement,
+  route = '/',
+  path = '/',
+) => {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+
+  act(() => {
+    root.render(
+      <MemoryRouter initialEntries={[route]}>
+        <Routes>
+          <Route path={path} element={element}>
+            <Route index element={<div>Nested child</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+  });
+
+  return {
+    container,
+    unmount: () => {
+      act(() => {
+        root.unmount();
+      });
+      document.body.removeChild(container);
+    },
+  };
+};

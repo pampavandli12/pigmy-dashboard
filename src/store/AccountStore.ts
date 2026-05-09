@@ -117,7 +117,7 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
     }
     // Here you would typically make an API call to update the accounts with the new phone numbers
   },
-  updateUserPhoneNumber: async (updateMobileNumber: string, userId: string) => {
+  updateUserPhoneNumber: async (updateMobileNumber: string, userId: number) => {
     const alertStore = useAlertStore.getState();
     set({ userAccountsLoadingStatus: Status.Loading });
     try {
