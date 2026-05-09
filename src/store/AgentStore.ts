@@ -116,7 +116,6 @@ export const useAgentStore = create<State & Action>((set) => ({
     set({ fetchAgentByCodeLoadingStatus: Status.Loading });
     try {
       const agent = await fetchAgentByCode(agentCode);
-      console.log('Fetched agent by code:', agent);
       set({
         selectedAgent: agent,
         fetchAgentByCodeLoadingStatus: Status.Success,
@@ -186,10 +185,8 @@ export const useAgentStore = create<State & Action>((set) => ({
       from: dayjs(formValues.dateRange.startDate).format('YYYY-MM-DD'),
       to: dayjs(formValues.dateRange.endDate).format('YYYY-MM-DD'),
     };
-    console.log('Creating deposit with values:', formValues);
     try {
       const response: CreateDepositResponse = await createDeposit(payload);
-      console.log('Deposit created successfully:', response);
       generateDepositDatFile(response);
       set({ createDepositLoadingStatus: Status.Success });
       showAlert(

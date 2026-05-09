@@ -1,5 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.hoisted(() => {
+  const storage = {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  };
+
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+  });
+});
+
 const axiosMock = vi.hoisted(() => {
   const handlers = {
     requestFulfilled: undefined as
@@ -68,6 +81,17 @@ describe('axios service', () => {
         Authorization: 'secret-token',
       },
     });
+
+    useAuthStore.setState({ token: null });
+
+    expect(
+      axiosMock.handlers.requestFulfilled?.({ headers: {} }),
+    ).toMatchObject({
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: '',
+      },
+    });
   });
 
   it('rejects interceptor errors and logs out on forbidden responses', async () => {
@@ -90,6 +114,16 @@ describe('axios service', () => {
       bankName: null,
     });
     expect(window.location.href).toBe('/signin');
+
+    window.location.href = '';
+
+    await expect(
+      axiosMock.handlers.responseRejected?.({ response: { status: 500 } }),
+    ).rejects.toEqual({ response: { status: 500 } });
+    await expect(
+      axiosMock.handlers.responseRejected?.({}),
+    ).rejects.toEqual({});
+
+    expect(window.location.href).toBe('');
   });
 });
-

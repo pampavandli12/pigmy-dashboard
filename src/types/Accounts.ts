@@ -5,6 +5,7 @@ export interface Account {
   customerName: string;
   currentBalance: number;
   lastDepositDate: string;
+  mobilenumber?: number | string;
   agentCode?: number;
   bankCode: string;
 }
@@ -17,11 +18,20 @@ export type UploadUserAccountPayload = {
   users: Array<
     Pick<
       Account,
-      | "schemeId"
-      | "accountNumber"
-      | "customerName"
-      | "currentBalance"
-      | "lastDepositDate"
+      | 'schemeId'
+      | 'accountNumber'
+      | 'customerName'
+      | 'currentBalance'
+      | 'lastDepositDate'
     >
   >;
+};
+
+export type ParsedPhoneNumberRow = {
+  accountNumber: number;
+  mobilenumber: number;
+};
+export type AccountUpdatePayload = {
+  bankCode: string;
+  userDetailsList: Array<ParsedPhoneNumberRow>;
 };

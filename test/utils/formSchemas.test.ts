@@ -73,5 +73,76 @@ describe('formSchemas', () => {
     ).toBe(false);
     expect(depositFilterSchema.safeParse({}).success).toBe(false);
   });
-});
 
+  it('covers invalid-input validation branches', () => {
+    expect(
+      addAgentSchema.safeParse({
+        name: 123,
+        address: 123,
+        password: 123,
+        phone: 123,
+        email: 123,
+        agentCode: 'bad-number',
+        type: 'manager',
+        limitAmount: 'bad-limit',
+      }).success,
+    ).toBe(false);
+
+    expect(
+      addAgentSchema.safeParse({
+        name: 'Ravi Kumar',
+        address: 'MG Road',
+        password: 'secret1',
+        phone: '9876543210',
+        email: 'ravi@example.com',
+        type: 'agent',
+      }).success,
+    ).toBe(false);
+
+    expect(
+      createDepositSchema.safeParse({
+        depositingAmount: '100',
+        voucherId: 123,
+        dateRange: {
+          startDate: true,
+          endDate: false,
+        },
+      }).success,
+    ).toBe(false);
+
+    expect(
+      createDepositSchema.safeParse({
+        depositingAmount: '100',
+        dateRange: {
+          startDate: '2026-04-01T00:00:00.000Z',
+          endDate: '2026-04-02T00:00:00.000Z',
+        },
+      }).success,
+    ).toBe(false);
+
+    expect(
+      createDepositSchema.safeParse({
+        depositingAmount: '100',
+        voucherId: 'V-3',
+        dateRange: {
+          startDate: undefined,
+          endDate: undefined,
+        },
+      }).success,
+    ).toBe(false);
+
+    expect(
+      depositFilterSchema.safeParse({
+        fromDate: true,
+        toDate: false,
+      }).success,
+    ).toBe(false);
+
+    expect(
+      depositFilterSchema.safeParse({
+        fromDate: undefined,
+        toDate: undefined,
+      }).success,
+    ).toBe(false);
+  });
+});

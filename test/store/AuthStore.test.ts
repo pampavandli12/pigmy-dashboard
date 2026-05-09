@@ -1,4 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.hoisted(() => {
+  const storage = {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  };
+
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+  });
+});
+
 import { useAuthStore } from '../../src/store/AuthStore';
 
 describe('AuthStore', () => {
@@ -29,4 +43,3 @@ describe('AuthStore', () => {
     });
   });
 });
-

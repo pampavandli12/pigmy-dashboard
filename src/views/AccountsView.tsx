@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import {
   Box,
   Button,
@@ -10,47 +10,44 @@ import {
   InputLabel,
   Checkbox,
   ListItemText,
-} from "@mui/material";
-import type { SelectChangeEvent } from "@mui/material";
-import type { GridColDef } from "@mui/x-data-grid";
-import { DataGrid } from "@mui/x-data-grid";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import { styled } from "@mui/material/styles";
-import type { UploadUserAccountPayload } from "../types/Accounts";
-import { useAuthStore } from "../store/AuthStore";
-import { Status } from "../types/sharedEnums";
-import { useAccountStore } from "../store/AccountStore";
-import { useAgentStore } from "../store/AgentStore";
-import NoRowsOverlay from "../components/NoRowsOverlay";
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
+import type { GridColDef } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { styled } from '@mui/material/styles';
+import type {
+  AccountFetchResponse,
+  UploadUserAccountPayload,
+} from '../types/Accounts';
+import { useAuthStore } from '../store/AuthStore';
+import { Severity, Status } from '../types/sharedEnums';
+import { useAccountStore } from '../store/AccountStore';
+import { useAgentStore } from '../store/AgentStore';
+import NoRowsOverlay from '../components/NoRowsOverlay';
+import { parseCSVFile } from '../utils/helpers';
+import { useAlertStore } from '../store/AlertStore';
 
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
   height: 1,
-  overflow: "hidden",
-  position: "absolute",
+  overflow: 'hidden',
+  position: 'absolute',
   bottom: 0,
   left: 0,
-  whiteSpace: "nowrap",
+  whiteSpace: 'nowrap',
   width: 1,
 });
 
-const columns: GridColDef[] = [
-  {
-    field: "customerName",
-    headerName: "Customer Name",
-    flex: 1,
-    minWidth: 180,
-  },
-  { field: "accountNumber", headerName: "Account Number", width: 160 },
-  {
-    field: "currentBalance",
-    headerName: "Current Balance",
-    width: 150,
-  },
-  { field: "lastDepositDate", headerName: "Deposit Date", width: 140 },
-  { field: "agentName", headerName: "Agent Name", flex: 1, minWidth: 140 },
-];
+type AccountRow = AccountFetchResponse[number];
+
+const PHONE_NUMBER_ERROR_MESSAGE = 'Phone number must be 10 digits.';
+
+const normalizePhoneNumber = (value: unknown) => String(value ?? '').trim();
+
+const isValidPhoneNumber = (value: unknown) =>
+  /^\d{10}$/.test(normalizePhoneNumber(value));
 
 function AccountsView() {
   const [agentFilter, setAgentFilter] = useState<string[]>([]);
@@ -64,6 +61,16 @@ function AccountsView() {
     (state) => state.userAccountsLoadingStatus,
   );
   const userAccounts = useAccountStore((state) => state.userAccounts);
+  const updateUserAccounts = useAccountStore(
+    (state) => state.updateUserAccounts,
+  );
+  const userPhoneNumberUpdateStatus = useAccountStore(
+    (state) => state.userPhoneNumberUpdateStatus,
+  );
+  const showAlert = useAlertStore((state) => state.showAlert);
+  const updateUserPhoneNumber = useAccountStore(
+    (state) => state.updateUserPhoneNumber,
+  );
 
   const agents = useAgentStore((state) => state.agents);
   useEffect(() => {
@@ -75,7 +82,7 @@ function AccountsView() {
   const handleAgentChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
     setAgentFilter(
-      typeof value === "string" ? value.split(",") : (value as string[]),
+      typeof value === 'string' ? value.split(',') : (value as string[]),
     );
   };
 
@@ -91,10 +98,10 @@ function AccountsView() {
     reader.onload = async (event) => {
       if (!event.target) return;
       const content = event.target.result;
-      if (!content || typeof content !== "string") return;
-      const lines = content.split("\n");
+      if (!content || typeof content !== 'string') return;
+      const lines = content.split('\n');
       const [agent, ...users] = lines;
-      const userList: UploadUserAccountPayload["users"] = [];
+      const userList: UploadUserAccountPayload['users'] = [];
       users.forEach((element) => {
         const [
           schemeId,
@@ -103,7 +110,7 @@ function AccountsView() {
           customerName,
           currentBalance,
           lastDepositDate,
-        ] = element.split(",");
+        ] = element.split(',');
         if (!accountNumber || !customerName) return; // skip invalid lines
         userList.push({
           schemeId,
@@ -113,14 +120,23 @@ function AccountsView() {
           lastDepositDate,
         });
       });
-      const [, agentCode] = agent.split(",");
+      const [, agentCode] = agent.split(',');
       await uploadUserAccount({
         agentCode: Number(agentCode),
-        bankCode: bankCode || "",
+        bankCode: bankCode || '',
         users: userList,
       });
     };
     reader.readAsText(file); // 👈 key
+  };
+  const handlePhoneNumberUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    try {
+      const parsedData = await parseCSVFile(file);
+      await updateUserAccounts(parsedData);
+    } finally {
+      e.target.value = '';
+    }
   };
   const isUploading = useMemo(
     () => uploadUserAccountLoading === Status.Loading,
@@ -132,66 +148,139 @@ function AccountsView() {
       agentFilter.length > 0 ? agentFilter.includes(account.agentName) : true,
     );
   }, [agentFilter, userAccounts]);
+  const isUpdatingPhoneNumbers = useMemo(
+    () => userPhoneNumberUpdateStatus === Status.Loading,
+    [userPhoneNumberUpdateStatus],
+  );
+  const handlePhoneNumberUpdate = async (
+    updatedRow: AccountRow,
+    originalRow: AccountRow,
+  ) => {
+    const mobileNumber = normalizePhoneNumber(updatedRow.mobilenumber);
+
+    if (!isValidPhoneNumber(mobileNumber)) {
+      showAlert(true, PHONE_NUMBER_ERROR_MESSAGE, Severity.Error);
+      throw new Error(PHONE_NUMBER_ERROR_MESSAGE);
+    }
+
+    if (mobileNumber === normalizePhoneNumber(originalRow.mobilenumber)) {
+      return originalRow;
+    }
+
+    await updateUserPhoneNumber(mobileNumber, updatedRow.userId);
+
+    return { ...updatedRow, mobilenumber: mobileNumber };
+  };
+
+  const columns = useMemo<GridColDef<AccountRow>[]>(
+    () => [
+      {
+        field: 'customerName',
+        headerName: 'Customer Name',
+        flex: 1,
+        minWidth: 180,
+      },
+      { field: 'accountNumber', headerName: 'Account Number', width: 160 },
+      {
+        field: 'currentBalance',
+        headerName: 'Current Balance',
+        width: 150,
+      },
+      {
+        field: 'mobilenumber',
+        headerName: 'Phone Number',
+        width: 160,
+        editable: true,
+        renderCell: (params) => params.value || 'N/A',
+        preProcessEditCellProps: (params) => ({
+          ...params.props,
+          error: !isValidPhoneNumber(params.props.value),
+        }),
+      },
+      { field: 'lastDepositDate', headerName: 'Deposit Date', width: 140 },
+      { field: 'agentName', headerName: 'Agent Name', flex: 1, minWidth: 140 },
+    ],
+    [],
+  );
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: '100%' }}>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
           mb: 1,
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, mt: 1 }}>
+          <Typography variant='h4' sx={{ fontWeight: 800, mb: 0.5, mt: 1 }}>
             Customer Deposits
           </Typography>
-          <Typography sx={{ color: "#6b7280", mb: 2 }}>
+          <Typography sx={{ color: '#6b7280', mb: 2 }}>
             View, search, and manage all customer deposits.
           </Typography>
         </Box>
-        <Button
-          component="label"
-          role={undefined}
-          variant="contained"
-          tabIndex={-1}
-          loading={isUploading}
-          startIcon={<CloudUploadIcon />}
-        >
-          Upload users
-          <VisuallyHiddenInput
-            type="file"
-            onChange={handleFileUpload}
-            multiple
-          />
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {/* update phone number */}
+          <Button
+            component='label'
+            role={undefined}
+            variant='contained'
+            tabIndex={-1}
+            loading={isUpdatingPhoneNumbers}
+            startIcon={<CloudUploadIcon />}
+          >
+            Upload phone numbers
+            <VisuallyHiddenInput
+              type='file'
+              onChange={handlePhoneNumberUpload}
+              multiple
+            />
+          </Button>
+          {/* // update phone number */}
+          <Button
+            component='label'
+            role={undefined}
+            variant='contained'
+            tabIndex={-1}
+            loading={isUploading}
+            startIcon={<CloudUploadIcon />}
+          >
+            Upload users
+            <VisuallyHiddenInput
+              type='file'
+              onChange={handleFileUpload}
+              multiple
+            />
+          </Button>
+        </Box>
       </Box>
 
       <Paper
         elevation={1}
-        sx={{ p: 3, borderRadius: 2, mb: 3, backgroundColor: "#ffffff" }}
+        sx={{ p: 3, borderRadius: 2, mb: 3, backgroundColor: '#ffffff' }}
       >
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 2,
-            alignItems: "center",
-            flexWrap: "wrap",
+            alignItems: 'center',
+            flexWrap: 'wrap',
           }}
         >
           <Box
-            sx={{ display: "flex", gap: 1, ml: "auto", alignItems: "center" }}
+            sx={{ display: 'flex', gap: 1, ml: 'auto', alignItems: 'center' }}
           >
-            <FormControl size="small" sx={{ minWidth: 240 }}>
-              <InputLabel id="agent-filter-label">Agent</InputLabel>
+            <FormControl size='small' sx={{ minWidth: 240 }}>
+              <InputLabel id='agent-filter-label'>Agent</InputLabel>
               <Select
-                labelId="agent-filter-label"
+                labelId='agent-filter-label'
                 multiple
                 value={agentFilter}
                 onChange={handleAgentChange}
-                renderValue={(selected) => (selected as string[]).join(", ")}
-                label="Agent"
-                sx={{ textTransform: "none" }}
+                renderValue={(selected) => (selected as string[]).join(', ')}
+                label='Agent'
+                sx={{ textTransform: 'none' }}
               >
                 {agents.map((a) => (
                   <MenuItem key={a.id} value={a.name}>
@@ -206,10 +295,10 @@ function AccountsView() {
 
         <Box
           sx={{
-            width: "100%",
+            width: '100%',
             mt: 2,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <Box sx={{ flex: 1 }}>
@@ -219,13 +308,15 @@ function AccountsView() {
               disableRowSelectionOnClick
               loading={isUserAccountsLoading}
               showToolbar
-              paginationMode="client"
+              paginationMode='client'
+              processRowUpdate={handlePhoneNumberUpdate}
+              onProcessRowUpdateError={() => undefined}
               slots={{
                 noRowsOverlay: () => (
-                  <NoRowsOverlay message="No accounts found. Please upload accounts to view them here." />
+                  <NoRowsOverlay message='No accounts found. Please upload accounts to view them here.' />
                 ),
                 noResultsOverlay: () => (
-                  <NoRowsOverlay message="No accounts match the selected filters." />
+                  <NoRowsOverlay message='No accounts match the selected filters.' />
                 ),
               }}
               pageSizeOptions={[5, 10, 25]}
@@ -234,17 +325,17 @@ function AccountsView() {
               }}
               getRowId={(row) => row.accountNumber}
               sx={{
-                border: "none",
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "#f6f7f8",
-                  color: "#6b7280",
+                border: 'none',
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: '#f6f7f8',
+                  color: '#6b7280',
                   fontWeight: 700,
                   borderTopLeftRadius: 8,
                   borderTopRightRadius: 8,
                 },
-                "& .MuiDataGrid-columnSeparator": { display: "none" },
-                "& .MuiDataGrid-row": { borderBottom: "1px solid #f1f3f5" },
-                "& .MuiDataGrid-cell": { py: 1.5 },
+                '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                '& .MuiDataGrid-row': { borderBottom: '1px solid #f1f3f5' },
+                '& .MuiDataGrid-cell': { py: 1.5 },
               }}
             />
           </Box>

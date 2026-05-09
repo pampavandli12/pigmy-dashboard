@@ -1,6 +1,12 @@
-import type { AccountFetchResponse, AccountsResponse } from '../types/Accounts';
+import type {
+  AccountFetchResponse,
+  AccountsResponse,
+  ParsedPhoneNumberRow,
+} from '../types/Accounts';
 import type { AgentsResponse } from '../types/sharedEnums';
 import type { CreateDepositResponse } from '../types/Agent';
+import * as XLSX from 'xlsx';
+import { useAlertStore } from '../store/AlertStore';
 
 export const mapAccountsToAgents = (
   accounts: AccountsResponse,
@@ -63,4 +69,77 @@ export const generateDepositDatFile = (
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+const REQUIRED_PHONE_NUMBER_COLUMNS = ['Mobile1', 'AccountNumber'] as const;
+
+export const parseCSVFile = async (
+  file?: File,
+): Promise<ParsedPhoneNumberRow[]> => {
+  const showAlert = useAlertStore.getState().showAlert;
+  if (!file) {
+    showAlert(true, 'Please upload an XLSX file.', 'error');
+    throw new Error('Please upload an XLSX file.');
+  }
+
+  const isXlsxFile = file.name.toLowerCase().endsWith('.xlsx');
+  if (!isXlsxFile) {
+    showAlert(true, 'Please upload a valid XLSX file.', 'error');
+    throw new Error('Please upload a valid XLSX file.');
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      showAlert(true, 'Unable to read the XLSX file.', 'error');
+      reject(new Error('Unable to read the XLSX file.'));
+    };
+
+    reader.onload = (event) => {
+      try {
+        const data = event.target?.result;
+
+        const workbook = XLSX.read(data, {
+          type: 'array',
+        });
+        const sheetName = workbook.SheetNames[0];
+
+        if (!sheetName) {
+          throw new Error('The XLSX file should have some data.');
+        }
+
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(
+          worksheet,
+          { defval: '' },
+        );
+
+        if (jsonData.length === 0) {
+          throw new Error('The XLSX file should have some data.');
+        }
+
+        const missingColumns = REQUIRED_PHONE_NUMBER_COLUMNS.filter(
+          (column) => !(column in jsonData[0]),
+        );
+
+        if (missingColumns.length > 0) {
+          throw new Error(
+            `The XLSX file should include ${missingColumns.join(', ')} column${missingColumns.length > 1 ? 's' : ''}.`,
+          );
+        }
+
+        resolve(
+          jsonData.map((row) => ({
+            mobilenumber: row.Mobile1 as number,
+            accountNumber: row.AccountNumber as number,
+          })),
+        );
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
 };
