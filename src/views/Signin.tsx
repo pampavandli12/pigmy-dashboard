@@ -7,15 +7,15 @@ import {
   Paper,
   CssBaseline,
   Alert,
-} from "@mui/material";
-import { login } from "../services/login";
+} from '@mui/material';
+import { login } from '../services/login';
 
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginFormValues } from "../utils/formSchemas";
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, type LoginFormValues } from '../utils/formSchemas';
 
-import { useAuthStore } from "../store/AuthStore";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useAuthStore } from '../store/AuthStore';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 function Signin() {
   const {
@@ -25,7 +25,7 @@ function Signin() {
     setError,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: "onChange", // better UX
+    mode: 'onChange', // better UX
   });
   const authStore = useAuthStore();
   const navigate = useNavigate();
@@ -33,27 +33,24 @@ function Signin() {
   const location = useLocation(); // useLocation() can also be used if needed
 
   const onSubmit = async (data: LoginFormValues) => {
-    console.log(data);
     // Handle login logic here
-    console.log("Login attempted with:", data);
     try {
       const respose = await login(data);
       authStore.setToken(respose.token);
       authStore.setBankName(respose.bankName);
       authStore.setBankCode(respose.bankCode);
-      console.log("Login successful, navigating to dashboard...", respose);
-      navigate("/", { replace: true });
+      navigate('/', { replace: true });
     } catch (error) {
-      console.error("Login failed:", JSON.stringify(error));
-      setError("root", {
-        type: "manual",
-        message: "Login failed. Please check your credentials.",
+      console.error('Login failed:', JSON.stringify(error));
+      setError('root', {
+        type: 'manual',
+        message: 'Login failed. Please check your credentials.',
       });
     }
   };
   // 🟢 If already logged in → redirect
   if (token) {
-    const redirectTo = location.state?.from?.pathname ?? "/";
+    const redirectTo = location.state?.from?.pathname ?? '/';
     return <Navigate to={redirectTo} replace />;
   }
   return (
@@ -61,12 +58,12 @@ function Signin() {
       <CssBaseline />
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#f5f5f5",
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#f5f5f5',
         }}
       >
         {/* Logo */}
@@ -74,21 +71,21 @@ function Signin() {
           sx={{
             width: 60,
             height: 60,
-            backgroundColor: "#1976d2",
-            transform: "rotate(45deg)",
-            borderRadius: "8px",
+            backgroundColor: '#1976d2',
+            transform: 'rotate(45deg)',
+            borderRadius: '8px',
             marginBottom: 3,
           }}
         />
 
         {/* Title */}
         <Typography
-          variant="h3"
+          variant='h3'
           sx={{
             fontWeight: 700,
-            color: "#1a1a1a",
+            color: '#1a1a1a',
             marginBottom: 1,
-            fontSize: { xs: "28px", md: "36px" },
+            fontSize: { xs: '28px', md: '36px' },
           }}
         >
           Bank Admin Portal
@@ -97,9 +94,9 @@ function Signin() {
         {/* Subtitle */}
         <Typography
           sx={{
-            color: "#666666",
+            color: '#666666',
             marginBottom: 4,
-            fontSize: "16px",
+            fontSize: '16px',
           }}
         >
           Securely access your dashboard.
@@ -110,19 +107,19 @@ function Signin() {
           elevation={1}
           sx={{
             padding: 4,
-            width: "100%",
+            width: '100%',
             maxWidth: 450,
-            borderRadius: "12px",
+            borderRadius: '12px',
           }}
         >
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Box component='form' onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Bank Code Field */}
             <Box sx={{ marginBottom: 2.5 }}>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   marginBottom: 1,
                 }}
               >
@@ -130,21 +127,21 @@ function Signin() {
               </Typography>
 
               <Controller
-                name="bankCode"
+                name='bankCode'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     {...field}
                     fullWidth
-                    placeholder="Enter bank code"
+                    placeholder='Enter bank code'
                     error={!!errors.bankCode}
                     helperText={errors.bankCode?.message}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
-                        backgroundColor: "#ffffff",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
+                        backgroundColor: '#ffffff',
                       },
                     }}
                   />
@@ -156,30 +153,30 @@ function Signin() {
             <Box sx={{ marginBottom: 2.5 }}>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   marginBottom: 1,
                 }}
               >
                 Username
               </Typography>
               <Controller
-                name="userName"
+                name='userName'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     fullWidth
-                    placeholder="Enter your username"
+                    placeholder='Enter your username'
                     {...field}
-                    variant="outlined"
+                    variant='outlined'
                     error={!!errors.userName}
                     helperText={errors.userName?.message}
-                    size="medium"
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
-                        backgroundColor: "#ffffff",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
+                        backgroundColor: '#ffffff',
                       },
                     }}
                   />
@@ -191,31 +188,31 @@ function Signin() {
             <Box sx={{ marginBottom: 3 }}>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: "#333333",
+                  color: '#333333',
                   marginBottom: 1,
                 }}
               >
                 Password
               </Typography>
               <Controller
-                name="password"
+                name='password'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     fullWidth
-                    type="password"
-                    placeholder="Enter your password"
+                    type='password'
+                    placeholder='Enter your password'
                     error={!!errors.password}
                     helperText={errors.password?.message}
                     {...field}
-                    variant="outlined"
-                    size="medium"
+                    variant='outlined'
+                    size='medium'
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "6px",
-                        backgroundColor: "#ffffff",
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
+                        backgroundColor: '#ffffff',
                       },
                     }}
                   />
@@ -225,43 +222,43 @@ function Signin() {
 
             {/* Login Button */}
             <Button
-              type="submit"
+              type='submit'
               fullWidth
-              variant="contained"
+              variant='contained'
               disabled={isSubmitting}
               sx={{
-                backgroundColor: "#1976d2",
-                color: "#ffffff",
-                padding: "12px 0",
-                fontSize: "16px",
+                backgroundColor: '#1976d2',
+                color: '#ffffff',
+                padding: '12px 0',
+                fontSize: '16px',
                 fontWeight: 600,
-                borderRadius: "6px",
-                textTransform: "none",
+                borderRadius: '6px',
+                textTransform: 'none',
                 marginBottom: 2,
-                "&:hover": {
-                  backgroundColor: "#1565c0",
+                '&:hover': {
+                  backgroundColor: '#1565c0',
                 },
               }}
             >
               Login
             </Button>
             {errors.root && (
-              <Alert sx={{ marginBottom: 2 }} severity="warning">
+              <Alert sx={{ marginBottom: 2 }} severity='warning'>
                 {errors.root.message}
               </Alert>
             )}
 
             {/* Forgot Password Link */}
-            <Box sx={{ textAlign: "center" }}>
+            <Box sx={{ textAlign: 'center' }}>
               <Link
-                href="#"
-                underline="none"
+                href='#'
+                underline='none'
                 sx={{
-                  color: "#1976d2",
-                  fontSize: "14px",
+                  color: '#1976d2',
+                  fontSize: '14px',
                   fontWeight: 500,
-                  "&:hover": {
-                    textDecoration: "underline",
+                  '&:hover': {
+                    textDecoration: 'underline',
                   },
                 }}
               >
@@ -274,8 +271,8 @@ function Signin() {
         {/* Footer */}
         <Typography
           sx={{
-            color: "#999999",
-            fontSize: "12px",
+            color: '#999999',
+            fontSize: '12px',
             marginTop: 6,
           }}
         >

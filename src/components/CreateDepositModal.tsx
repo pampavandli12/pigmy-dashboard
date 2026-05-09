@@ -56,7 +56,6 @@ export default function CreateDepositModal({
     onClose();
   };
   const onSubmit: SubmitHandler<CreateDepositFormValues> = async (data) => {
-    console.log(data);
     await createDeposit(data, Number(agentCode));
     onClose();
   };

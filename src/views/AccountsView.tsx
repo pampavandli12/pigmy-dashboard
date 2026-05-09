@@ -167,13 +167,9 @@ function AccountsView() {
       return originalRow;
     }
 
-    console.log('Updated phone number:', {
-      accountNumber: updatedRow.accountNumber,
-      previousMobileNumber: normalizePhoneNumber(originalRow.mobilenumber),
-      mobilenumber: mobileNumber,
-    });
-
     await updateUserPhoneNumber(mobileNumber, updatedRow.userId);
+
+    return { ...updatedRow, mobilenumber: mobileNumber };
   };
 
   const columns = useMemo<GridColDef<AccountRow>[]>(

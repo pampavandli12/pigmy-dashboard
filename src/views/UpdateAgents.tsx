@@ -43,7 +43,6 @@ export default function UpdateAgents() {
     return <LoadingComponent />;
   }
   const handleSubmit = async (data: AddAgentFormValues) => {
-    console.log('Form Data to be submitted for update:', data);
     try {
       await updateAgent(params.agentCode as string, {
         ...data,

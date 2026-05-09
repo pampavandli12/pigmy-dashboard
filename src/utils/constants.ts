@@ -13,7 +13,8 @@ const getConfig = (env: Environment): AppConfig => {
     development: {
       // apiDomain:
       //   "https://uncontrastively-nondyspeptical-mabelle.ngrok-free.dev",
-      apiDomain: 'http://localhost:8080',
+      //apiDomain: 'http://localhost:8080',
+      apiDomain: 'http://localhost:1002',
       apiTimeout: 30000,
       logLevel: 'debug',
     },

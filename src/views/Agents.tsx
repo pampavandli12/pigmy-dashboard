@@ -33,7 +33,6 @@ function Agents() {
   };
   const addAgent = () => {
     // Logic to navigate to Add Agent page
-    console.log('Navigate to Add Agent page');
     navigate('/agents/addAgent');
   };
   const getStatusColor = (status: string) => {
@@ -42,12 +41,10 @@ function Agents() {
     return '#666666';
   };
   const handleEditAgent = async (agentCode: number) => {
-    console.log('Navigate to Edit Agent page for agent code:', agentCode);
     navigate(`/agents/editAgent/${agentCode}`);
   };
 
   const loadTransactions = (agentCode: number) => {
-    console.log('redirect to transactions page');
     navigate(`/agents/transactions/${agentCode}`);
   };
 
