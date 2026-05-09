@@ -19,6 +19,14 @@ class FileReaderMock {
   }
 }
 
+class FileReaderErrorMock {
+  onerror: (() => void) | null = null;
+
+  readAsArrayBuffer() {
+    this.onerror?.();
+  }
+}
+
 const createWorkbookFile = (
   rows: Record<string, string | number>[],
   fileName = 'phone-numbers.xlsx',
@@ -141,6 +149,16 @@ describe('helpers', () => {
     ).rejects.toThrow('Please upload a valid XLSX file.');
   });
 
+  it('rejects missing and unreadable XLSX phone number files', async () => {
+    await expect(parseCSVFile()).rejects.toThrow('Please upload an XLSX file.');
+
+    vi.stubGlobal('FileReader', FileReaderErrorMock);
+
+    await expect(parseCSVFile(createWorkbookFile([]))).rejects.toThrow(
+      'Unable to read the XLSX file.',
+    );
+  });
+
   it('rejects empty XLSX phone number files', async () => {
     vi.stubGlobal('FileReader', FileReaderMock);
 
@@ -156,6 +174,12 @@ describe('helpers', () => {
       parseCSVFile(createWorkbookFile([{ Mobile1: '9876543210' }])),
     ).rejects.toThrow(
       'The XLSX file should include AccountNumber column.',
+    );
+
+    await expect(
+      parseCSVFile(createWorkbookFile([{ CustomerName: 'Asha' }])),
+    ).rejects.toThrow(
+      'The XLSX file should include Mobile1, AccountNumber columns.',
     );
   });
 });

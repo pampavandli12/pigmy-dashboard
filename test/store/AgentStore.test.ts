@@ -1,6 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Status, type Agent } from '../../src/types/sharedEnums';
 
+vi.hoisted(() => {
+  const storage = {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  };
+
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+  });
+});
+
 const agentApi = vi.hoisted(() => ({
   fetchAgents: vi.fn(),
   createAgent: vi.fn(),
@@ -206,5 +219,90 @@ describe('AgentStore', () => {
     });
     expect(useAlertStore.getState().alert.open).toBe(true);
   });
-});
 
+  it('covers deposit fallback branches', async () => {
+    useAuthStore.setState({ bankCode: null });
+
+    agentApi.createDeposit.mockResolvedValue({
+      agentCode: 404,
+      bankCode: '',
+      totalDepositedAmount: 50,
+      depositedDate: '27.04.26',
+      users: [],
+    });
+    agentApi.fetchPastDeposits.mockResolvedValue([]);
+
+    await useAgentStore.getState().createDeposit(
+      {
+        depositingAmount: 50,
+        voucherId: 'V2',
+        dateRange: {
+          startDate: '2026-04-01T00:00:00.000Z',
+          endDate: '2026-04-02T00:00:00.000Z',
+        },
+      },
+      404,
+    );
+    expect(agentApi.createDeposit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        name: 'Unknown Agent',
+        bankCode: '',
+      }),
+    );
+
+    await useAgentStore
+      .getState()
+      .fetchPastDeposits(404, '2026-04-01', '2026-04-27');
+    expect(agentApi.fetchPastDeposits).toHaveBeenLastCalledWith(
+      expect.objectContaining({ bankCode: '' }),
+    );
+
+    agentApi.createDeposit.mockRejectedValue({ response: { data: '{}' } });
+    await useAgentStore.getState().createDeposit(
+      {
+        depositingAmount: 50,
+        voucherId: 'V3',
+        dateRange: {
+          startDate: new Date('2026-04-01'),
+          endDate: new Date('2026-04-02'),
+        },
+      },
+      404,
+    );
+    expect(useAlertStore.getState().alert).toMatchObject({
+      message: 'Unknown error',
+      severity: 'error',
+    });
+
+    agentApi.createDeposit.mockRejectedValue({});
+    await useAgentStore.getState().createDeposit(
+      {
+        depositingAmount: 50,
+        voucherId: 'V4',
+        dateRange: {
+          startDate: new Date('2026-04-01'),
+          endDate: new Date('2026-04-02'),
+        },
+      },
+      404,
+    );
+    expect(useAlertStore.getState().alert).toMatchObject({
+      message: 'Unknown error',
+      severity: 'error',
+    });
+
+    agentApi.exportDepositById.mockRejectedValue({ response: { data: '{}' } });
+    await useAgentStore.getState().exportDepositeById(1, 404, '2026-04-27', 50);
+    expect(useAlertStore.getState().alert).toMatchObject({
+      message: 'Unknown error',
+      severity: 'error',
+    });
+
+    agentApi.exportDepositById.mockRejectedValue({});
+    await useAgentStore.getState().exportDepositeById(1, 404, '2026-04-27', 50);
+    expect(useAlertStore.getState().alert).toMatchObject({
+      message: 'Unknown error',
+      severity: 'error',
+    });
+  });
+});
