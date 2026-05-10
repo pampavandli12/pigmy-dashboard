@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { API_URLS, MOCK_DEPOSIT_RESPONSE, appConfig } from '../../src/utils/constants';
+import {
+  API_URLS,
+  MOCK_DEPOSIT_RESPONSE,
+  appConfig,
+} from '../../src/utils/constants';
 
 describe('constants', () => {
   it('exports app config and API paths', () => {
     expect(appConfig).toMatchObject({
-      apiDomain: 'http://localhost:1002',
+      apiDomain: 'https://pigmyapp-jomt.onrender.com',
       apiTimeout: 30000,
       logLevel: 'debug',
     });
@@ -16,4 +20,3 @@ describe('constants', () => {
     expect(MOCK_DEPOSIT_RESPONSE.users).toHaveLength(2);
   });
 });
-
