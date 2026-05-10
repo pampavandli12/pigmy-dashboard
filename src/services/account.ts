@@ -31,6 +31,6 @@ export const UpdateUserPhoneNumber = async (
   updateMobileNumber: string,
   userId: number,
 ): Promise<unknown> => {
-  const url = `${API_URLS.UPDATE_PHONY_BY_ACCOUNT}?userId=${userId}&updateMobileNumber=${updateMobileNumber}`;
+  const url = `${API_URLS.UPDATE_PHONY_BY_ACCOUNT}?userId=${userId}&mobilenumber=${updateMobileNumber}`;
   return api.patch(url).then((response) => response.data);
 };
