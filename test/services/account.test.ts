@@ -66,7 +66,7 @@ describe('account service', () => {
       'patch-data',
     );
     expect(apiMock.patch).toHaveBeenLastCalledWith(
-      `${API_URLS.UPDATE_PHONY_BY_ACCOUNT}?userId=7&updateMobileNumber=9876543210`,
+      `${API_URLS.UPDATE_PHONY_BY_ACCOUNT}?userId=7&mobilenumber=9876543210`,
     );
   });
 });
