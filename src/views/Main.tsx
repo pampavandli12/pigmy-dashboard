@@ -1,17 +1,18 @@
-import { useState } from "react";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import SideDrawer from "../components/SideDrawer";
-import Container from "@mui/material/Container";
+import { useState } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import SideDrawer from '../components/SideDrawer';
+import Container from '@mui/material/Container';
 // Drawer icons moved into SideDrawer component
-import { Outlet, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/AuthStore";
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/AuthStore';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { Tooltip } from '@mui/material';
 
 const DRAWER_WIDTH = 250;
 const DRAWER_COLLAPSED_WIDTH = 70;
@@ -27,16 +28,16 @@ function Main() {
   };
   const handleLogout = () => {
     logout();
-    navigation("/signin", { replace: true });
+    navigation('/signin', { replace: true });
   };
 
   // drawer content moved to SideDrawer component
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: 'flex' }}>
       {/* App Bar */}
       <AppBar
-        position="fixed"
+        position='fixed'
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           width: `calc(100% - ${
@@ -44,7 +45,7 @@ function Main() {
           }px)`,
           marginLeft: drawerExpanded ? DRAWER_WIDTH : DRAWER_COLLAPSED_WIDTH,
           transition: (theme) =>
-            theme.transitions.create(["width", "margin"], {
+            theme.transitions.create(['width', 'margin'], {
               easing: theme.transitions.easing.easeInOut,
               duration: theme.transitions.duration.standard,
             }),
@@ -52,21 +53,24 @@ function Main() {
       >
         <Toolbar>
           <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
+            size='large'
+            edge='start'
+            color='inherit'
+            aria-label='menu'
             sx={{ mr: 2 }}
             onClick={toggleDrawer}
           >
             {drawerExpanded ? <ChevronLeftIcon /> : <MenuIcon />}
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {bankName || "Pigmy Dashboard"}
+          <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
+            {bankName || 'Pigmy Dashboard'}
           </Typography>
-          <Button color="inherit" onClick={handleLogout}>
-            Logout
-          </Button>
+
+          <Tooltip title='Log out' arrow>
+            <IconButton aria-label='logout' onClick={handleLogout}>
+              <LogoutIcon color='warning' />
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </AppBar>
 
@@ -75,16 +79,16 @@ function Main() {
 
       {/* Main Content */}
       <Box
-        component="main"
+        component='main'
         sx={{
           flexGrow: 1,
           p: 2,
           mt: 8,
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
           transition: (theme) =>
-            theme.transitions.create("margin", {
+            theme.transitions.create('margin', {
               easing: theme.transitions.easing.easeInOut,
               duration: theme.transitions.duration.standard,
             }),
@@ -94,10 +98,10 @@ function Main() {
         <Container
           maxWidth={false}
           sx={{
-            width: "100%",
+            width: '100%',
             flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             px: 0,
           }}
         >

@@ -10,6 +10,7 @@ import CreateAgent from './views/CreateAgent';
 import UpdateAgents from './views/UpdateAgents';
 import Transactions from './views/Transactions';
 import Deposits from './views/Deposits';
+import Reports from './views/Reports';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           </Route>
 
           <Route path='accounts' element={<AccountsView />} />
+          <Route path='reports' element={<Reports />} />
         </Route>
       </Route>
     </Routes>

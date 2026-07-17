@@ -169,6 +169,12 @@ const storeState = vi.hoisted(() => {
     token: 'token' as string | null,
     bankName: 'Test Bank' as string | null,
     bankCode: 'BANK1' as string | null,
+    city: 'Chennai' as string | null,
+    subBranches: [] as Array<{
+      bankCode: string;
+      bankName: string;
+      city: string;
+    }>,
     isHydrated: true,
     setToken: (token: string) => {
       auth.token = token;
@@ -179,6 +185,14 @@ const storeState = vi.hoisted(() => {
     setBankCode: (bankCode: string) => {
       auth.bankCode = bankCode;
     },
+    setCity: (city: string) => {
+      auth.city = city;
+    },
+    setSubBranches: (
+      subBranches: Array<{ bankCode: string; bankName: string; city: string }>,
+    ) => {
+      auth.subBranches = subBranches;
+    },
     setHydrated: () => {
       auth.isHydrated = true;
     },
@@ -186,6 +200,8 @@ const storeState = vi.hoisted(() => {
       auth.token = null;
       auth.bankName = null;
       auth.bankCode = null;
+      auth.city = null;
+      auth.subBranches = [];
     },
   };
   const alert = {
@@ -235,7 +251,17 @@ const storeState = vi.hoisted(() => {
     updateUserAccounts: vi.fn(),
     updateUserPhoneNumber: vi.fn(),
   };
-  return { auth, alert, agentStore, accountStore };
+  const reportStore = {
+    reportData: [] as unknown[],
+    reportLoadingStatus: 'Idle',
+    agentLoadingStatus: 'Success',
+    agents: [
+      { id: 1, name: 'Agent One', agentCode: 77, bankCode: 'BANK1' },
+    ] as unknown[],
+    fetchAgents: vi.fn(),
+    fetchReportData: vi.fn(),
+  };
+  return { auth, alert, agentStore, accountStore, reportStore };
 });
 
 export const getRenderStoreState = () => storeState;
@@ -284,6 +310,17 @@ vi.mock('../src/store/AccountStore', () => ({
     },
   ),
 }));
+vi.mock('../src/store/ReportStore', () => ({
+  useReportStore: Object.assign(
+    (selector?: (state: typeof storeState.reportStore) => unknown) =>
+      selector ? selector(storeState.reportStore) : storeState.reportStore,
+    {
+      getState: () => storeState.reportStore,
+      setState: (patch: Partial<typeof storeState.reportStore>) =>
+        Object.assign(storeState.reportStore, patch),
+    },
+  ),
+}));
 
 export const agent = {
   id: 1,
@@ -303,6 +340,8 @@ export const resetRenderStores = () => {
   storeState.auth.token = 'token';
   storeState.auth.bankName = 'Test Bank';
   storeState.auth.bankCode = 'BANK1';
+  storeState.auth.city = 'Chennai';
+  storeState.auth.subBranches = [];
   storeState.auth.isHydrated = true;
   storeState.alert.alert = { open: false, message: '', severity: 'success' };
   Object.assign(storeState.agentStore, {
@@ -353,6 +392,14 @@ export const resetRenderStores = () => {
         agentName: 'Agent One',
       },
     ],
+  });
+  Object.assign(storeState.reportStore, {
+    reportData: [],
+    reportLoadingStatus: 'Idle',
+    agentLoadingStatus: 'Success',
+    agents: [{ id: 1, name: 'Agent One', agentCode: 77, bankCode: 'BANK1' }],
+    fetchAgents: vi.fn(),
+    fetchReportData: vi.fn(),
   });
 };
 

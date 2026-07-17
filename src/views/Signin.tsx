@@ -39,6 +39,8 @@ function Signin() {
       authStore.setToken(respose.token);
       authStore.setBankName(respose.bankName);
       authStore.setBankCode(respose.bankCode);
+      authStore.setCity(respose.city);
+      authStore.setSubBranches(respose.subBranches);
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Login failed:', JSON.stringify(error));

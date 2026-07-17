@@ -44,8 +44,8 @@ export const API_URLS = {
   EXPORT_DEPOSITE_BY_ID: 'pigmy/v1/agent/export',
   UPDATE_PHONE: '/pigmy/v1/user/upload/mobilenumbers',
   UPDATE_PHONY_BY_ACCOUNT: '/pigmy/v1/user/updateMobileNumber',
+  REPORT: '/pigmy/v1/transaction/search',
 };
-
 export const MOCK_DEPOSIT_RESPONSE: CreateDepositResponse = {
   agentCode: 1,
   bankCode: 'AGT123',

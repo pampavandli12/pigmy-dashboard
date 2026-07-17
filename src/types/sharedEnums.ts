@@ -40,3 +40,13 @@ export const TransactionStatus = {
 } as const;
 export type TransactionStatus =
   (typeof TransactionStatus)[keyof typeof TransactionStatus];
+
+export const CollectionStatus = {
+  Deposited: 'Deposited',
+  Collected: 'Collected',
+} as const;
+
+export const SchemeType = {
+  PigmyDeposit: 'Pigmy Deposit',
+  DailyDeposit: 'Daily Deposit',
+} as const;
