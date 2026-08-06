@@ -12,6 +12,7 @@ import type {
 import {
   createAgent,
   createDeposit,
+  deviceReset,
   exportDepositById,
   fetchAgentByCode,
   fetchAgents,
@@ -43,6 +44,7 @@ type State = {
   fetchPastDepositsLoadingStatus: Status;
   exportDepositLoadingStatus: Status;
   pastDeposits: PastDeposit[];
+  ResetDeviceStatus: Status;
 };
 
 type Action = {
@@ -52,8 +54,10 @@ type Action = {
   fetchAgentByCode: (agentCode: string) => void;
   setSelectedAgent: (agent: Agent | null) => void;
   updateAgent: (agentCode: string, agentData: Partial<Agent>) => void;
+  resetDevice: (phoneNumber: string) => void;
   setCreateAgentLoadingStatus: (status: Status) => void;
   setUpdateAgentLoadingStatus: (status: Status) => void;
+
   exportDepositeById: (
     depositeId: number,
     agentCode: number,
@@ -84,6 +88,7 @@ export const useAgentStore = create<State & Action>((set) => ({
   fetchPastDepositsLoadingStatus: Status.Idle,
   exportDepositLoadingStatus: Status.Idle,
   pastDeposits: [],
+  ResetDeviceStatus: Status.Idle,
   setSelectedAgent: (agent) => set({ selectedAgent: agent }),
   fetchAgents: async () => {
     set({ fetchAgentLoadingStatus: Status.Loading });
@@ -265,6 +270,22 @@ export const useAgentStore = create<State & Action>((set) => ({
       alertStore.showAlert(
         true,
         'Failed to fetch past deposits. Please try again.',
+        Severity.Error,
+      );
+    }
+  },
+  resetDevice: async (phoneNumber: string) => {
+    set({ ResetDeviceStatus: Status.Loading });
+    const alertStore = useAlertStore.getState();
+    try {
+      await deviceReset(phoneNumber);
+      set({ ResetDeviceStatus: Status.Success });
+      alertStore.showAlert(true, 'Device reset successfully', Severity.Success);
+    } catch {
+      set({ ResetDeviceStatus: Status.Error });
+      alertStore.showAlert(
+        true,
+        'Failed to reset device, please try again',
         Severity.Error,
       );
     }

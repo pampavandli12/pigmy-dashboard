@@ -16,7 +16,32 @@ describe('Agents', () => {
   });
 
   it('renders agents from the store', () => {
-    expect(renderRoute(<Agents />)).toContain('Agent One');
+    const { container, unmount } = renderRouteNode(<Agents />);
+    expect(container.textContent).toContain('Agent One');
+    expect(container.textContent).toContain('••••••');
+    expect(container.textContent).not.toContain('654321');
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Show password for Agent One"]')
+        ?.click();
+    });
+    expect(container.textContent).toContain('654321');
+    unmount();
+  });
+
+  it('shows unavailable when an agent has no password', () => {
+    const storeState = getRenderStoreState();
+    storeState.agentStore.agents = [
+      { ...storeState.agentStore.agents[0], password: undefined },
+    ];
+
+    const { container, unmount } = renderRouteNode(<Agents />);
+    expect(container.textContent).toContain('Unavailable');
+    expect(
+      container.querySelector('[aria-label="Show password for Agent One"]'),
+    ).toBeNull();
+    unmount();
   });
 
   it('renders loading state and handles agent actions', async () => {

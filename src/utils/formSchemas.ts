@@ -30,7 +30,7 @@ export const addAgentSchema = z.object({
       error: (iss) =>
         iss.input === undefined ? 'Field is required.' : 'Invalid input.',
     })
-    .min(6, 'Password must be at least 6 characters'),
+    .regex(/^\d{6}$/, 'Password must be exactly 6 digits'),
 
   phone: z
     .string({

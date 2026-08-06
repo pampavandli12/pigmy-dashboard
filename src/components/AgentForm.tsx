@@ -13,9 +13,12 @@ import {
   Alert,
   FormControlLabel,
   Switch,
+  InputAdornment,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import Container from '@mui/material/Container';
 import { useForm, Controller } from 'react-hook-form';
 import {
@@ -24,7 +27,10 @@ import {
   type AddAgentFormValues,
 } from '../utils/formSchemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+const generateSixDigitPassword = () =>
+  String(Math.floor(100000 + Math.random() * 900000));
 
 type AgentFormProps = {
   defaultValues?: Partial<AddAgentFormValues> | null;
@@ -37,16 +43,20 @@ function AddAgent({
   callback,
   isUpdate,
 }: AgentFormProps) {
+  const [initialPassword] = useState(generateSixDigitPassword);
+  const [showPassword, setShowPassword] = useState(false);
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    setValue,
   } = useForm<AddAgentFormInput, unknown, AddAgentFormValues>({
     resolver: zodResolver(addAgentSchema),
     mode: 'onChange', // better UX
     defaultValues: {
       status: 'active',
+      password: initialPassword,
     },
   });
   const navigate = useNavigate();
@@ -256,12 +266,35 @@ function AddAgent({
                       fullWidth
                       {...field}
                       name='password'
-                      type='password'
-                      placeholder='Enter Password'
+                      type={showPassword ? 'text' : 'password'}
+                      disabled
                       error={!!errors.password}
                       helperText={errors.password?.message}
                       variant='outlined'
                       size='medium'
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position='end'>
+                              <IconButton
+                                aria-label={
+                                  showPassword
+                                    ? 'Hide agent password'
+                                    : 'Show agent password'
+                                }
+                                onClick={() => setShowPassword((shown) => !shown)}
+                                edge='end'
+                              >
+                                {showPassword ? (
+                                  <VisibilityOffIcon />
+                                ) : (
+                                  <VisibilityIcon />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
                       sx={{
                         flex: 1,
                         '& .MuiOutlinedInput-root': {
@@ -271,6 +304,18 @@ function AddAgent({
                     />
                   )}
                 />
+                <Button
+                  variant='outlined'
+                  onClick={() =>
+                    setValue('password', generateSixDigitPassword(), {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  sx={{ alignSelf: errors.password ? 'flex-start' : 'center' }}
+                >
+                  Generate
+                </Button>
               </Box>
             </Box>
 
