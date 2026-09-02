@@ -222,6 +222,7 @@ const storeState = vi.hoisted(() => {
     createDepositLoadingStatus: 'Idle',
     fetchPastDepositsLoadingStatus: 'Success',
     exportDepositLoadingStatus: 'Idle',
+    ResetDeviceStatus: 'Idle',
     pastDeposits: [] as unknown[],
     fetchAgents: vi.fn(),
     fetchTransactions: vi.fn(),
@@ -240,6 +241,7 @@ const storeState = vi.hoisted(() => {
     exportDepositeById: vi.fn(),
     createDeposit: vi.fn(),
     fetchPastDeposits: vi.fn(),
+    resetDevice: vi.fn(),
   };
   const accountStore = {
     uploadUserAccountStatus: 'Idle',
@@ -333,7 +335,7 @@ export const agent = {
   type: 'agent',
   status: 'active',
   limitAmount: 1000,
-  password: 'secret1',
+  password: '654321',
 } as const;
 
 export const resetRenderStores = () => {
@@ -365,6 +367,7 @@ export const resetRenderStores = () => {
     createDepositLoadingStatus: 'Idle',
     fetchPastDepositsLoadingStatus: 'Success',
     exportDepositLoadingStatus: 'Idle',
+    ResetDeviceStatus: 'Idle',
     pastDeposits: [
       {
         depositId: 1,

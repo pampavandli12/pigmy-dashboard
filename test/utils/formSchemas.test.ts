@@ -12,7 +12,7 @@ describe('formSchemas', () => {
       loginSchema.safeParse({
         bankCode: 'BK',
         userName: 'admin',
-        password: 'secret1',
+        password: '654321',
       }).success,
     ).toBe(true);
     expect(
@@ -24,7 +24,7 @@ describe('formSchemas', () => {
       addAgentSchema.parse({
         name: 'Ravi Kumar',
         address: 'MG Road',
-        password: 'secret1',
+        password: '654321',
         phone: '9876543210',
         email: 'ravi@example.com',
         agentCode: '101',
@@ -33,6 +33,18 @@ describe('formSchemas', () => {
       }),
     ).toMatchObject({ agentCode: 101, limitAmount: 2500, status: 'active' });
     expect(addAgentSchema.safeParse({}).success).toBe(false);
+    expect(
+      addAgentSchema.safeParse({
+        name: 'Ravi Kumar',
+        address: 'MG Road',
+        password: 'secret',
+        phone: '9876543210',
+        email: 'ravi@example.com',
+        agentCode: '101',
+        type: 'agent',
+        limitAmount: '2500',
+      }).success,
+    ).toBe(false);
 
     expect(
       createDepositSchema.safeParse({
@@ -92,7 +104,7 @@ describe('formSchemas', () => {
       addAgentSchema.safeParse({
         name: 'Ravi Kumar',
         address: 'MG Road',
-        password: 'secret1',
+        password: '654321',
         phone: '9876543210',
         email: 'ravi@example.com',
         type: 'agent',

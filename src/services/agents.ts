@@ -83,3 +83,9 @@ export const exportDepositById = async (
     )
     .then((response) => response.data);
 };
+
+export const deviceReset = async (phoneNumber: string) => {
+  return api
+    .delete(`${API_URLS.RESET_DEVICE}?mobileNumber=${phoneNumber}`)
+    .then((response) => response.data);
+};

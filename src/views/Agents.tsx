@@ -1,9 +1,11 @@
-import { Box, Typography, Button, Card, Avatar } from '@mui/material';
+import { Box, Typography, Button, Card, Avatar, IconButton } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SwapCallsIcon from '@mui/icons-material/SwapCalls';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAgentStore } from '../store/AgentStore';
@@ -18,7 +20,12 @@ function Agents() {
   const fetchAgentLoadingStatus = useAgentStore(
     (state) => state.fetchAgentLoadingStatus,
   );
+  const resetDevice = useAgentStore((state) => state.resetDevice);
+  const resetDeviceStatus = useAgentStore((state) => state.ResetDeviceStatus);
   const [openDeregisterModal, setOpenDeregisterModal] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<number>>(
+    () => new Set(),
+  );
   const setSelectedAgent = useAgentStore((state) => state.setSelectedAgent);
   const updateAgent = useAgentStore((state) => state.updateAgent);
   const selectedAgent = useAgentStore((state) => state.selectedAgent);
@@ -43,9 +50,19 @@ function Agents() {
   const handleEditAgent = async (agentCode: number) => {
     navigate(`/agents/editAgent/${agentCode}`);
   };
-
+  const handleDeviceReset = async (phoneNumber: string) => {
+    await resetDevice(phoneNumber);
+  };
   const loadTransactions = (agentCode: number) => {
     navigate(`/agents/transactions/${agentCode}`);
+  };
+  const togglePasswordVisibility = (agentCode: number) => {
+    setVisiblePasswords((current) => {
+      const next = new Set(current);
+      if (next.has(agentCode)) next.delete(agentCode);
+      else next.add(agentCode);
+      return next;
+    });
   };
 
   // Show loading state while fetching agents
@@ -190,6 +207,38 @@ function Agents() {
                   >
                     {agent.address}
                   </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                    <Typography
+                      variant='overline'
+                      sx={{
+                        background: '#e6d6d6',
+                        padding: '.25rem',
+                        color: 'darkmagenta',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {agent.password
+                        ? visiblePasswords.has(agent.agentCode)
+                          ? agent.password
+                          : '••••••'
+                        : 'Unavailable'}
+                    </Typography>
+                    {agent.password && (
+                      <IconButton
+                        size='small'
+                        aria-label={`${
+                          visiblePasswords.has(agent.agentCode) ? 'Hide' : 'Show'
+                        } password for ${agent.name}`}
+                        onClick={() => togglePasswordVisibility(agent.agentCode)}
+                      >
+                        {visiblePasswords.has(agent.agentCode) ? (
+                          <VisibilityOffIcon fontSize='small' />
+                        ) : (
+                          <VisibilityIcon fontSize='small' />
+                        )}
+                      </IconButton>
+                    )}
+                  </Box>
                 </Box>
               </Box>
             </Box>
@@ -337,14 +386,28 @@ function Agents() {
                 Deregister
               </Button>
             </Box>
-            <Button
-              variant='outlined'
-              fullWidth
-              sx={{ mt: 2 }}
-              onClick={() => handleEditAgent(agent.agentCode)}
+            <Box
+              sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}
             >
-              Edit Agent
-            </Button>
+              <Button
+                variant='outlined'
+                fullWidth
+                sx={{ mt: 2 }}
+                onClick={() => handleEditAgent(agent.agentCode)}
+              >
+                Edit Agent
+              </Button>
+              <Button
+                variant='outlined'
+                color='error'
+                loading={resetDeviceStatus == Status.Loading}
+                fullWidth
+                sx={{ mt: 2 }}
+                onClick={() => handleDeviceReset(agent.phone)}
+              >
+                Reset Device
+              </Button>
+            </Box>
           </Card>
         ))}
       </Box>
