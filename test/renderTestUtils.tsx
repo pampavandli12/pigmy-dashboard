@@ -170,6 +170,7 @@ const storeState = vi.hoisted(() => {
     bankName: 'Test Bank' as string | null,
     bankCode: 'BANK1' as string | null,
     city: 'Chennai' as string | null,
+    bankType: null as string | null,
     subBranches: [] as Array<{
       bankCode: string;
       bankName: string;
@@ -188,6 +189,9 @@ const storeState = vi.hoisted(() => {
     setCity: (city: string) => {
       auth.city = city;
     },
+    setBankType: (bankType: string) => {
+      auth.bankType = bankType;
+    },
     setSubBranches: (
       subBranches: Array<{ bankCode: string; bankName: string; city: string }>,
     ) => {
@@ -201,6 +205,7 @@ const storeState = vi.hoisted(() => {
       auth.bankName = null;
       auth.bankCode = null;
       auth.city = null;
+      auth.bankType = null;
       auth.subBranches = [];
     },
   };
@@ -222,6 +227,7 @@ const storeState = vi.hoisted(() => {
     createDepositLoadingStatus: 'Idle',
     fetchPastDepositsLoadingStatus: 'Success',
     exportDepositLoadingStatus: 'Idle',
+    voidTransactionLoadingStatus: 'Idle',
     ResetDeviceStatus: 'Idle',
     pastDeposits: [] as unknown[],
     fetchAgents: vi.fn(),
@@ -242,6 +248,7 @@ const storeState = vi.hoisted(() => {
     createDeposit: vi.fn(),
     fetchPastDeposits: vi.fn(),
     resetDevice: vi.fn(),
+    voidTransaction: vi.fn(),
   };
   const accountStore = {
     uploadUserAccountStatus: 'Idle',
@@ -263,7 +270,17 @@ const storeState = vi.hoisted(() => {
     fetchAgents: vi.fn(),
     fetchReportData: vi.fn(),
   };
-  return { auth, alert, agentStore, accountStore, reportStore };
+  const dashboardStore = {
+    dashboardData: null as {
+      daysLeft: number;
+      expiryDate: string;
+      NoOfLicencedPurchased: number;
+      purchaseDate: string;
+    } | null,
+    dashboardLoadingStatus: 'Idle',
+    fetchDashboard: vi.fn(),
+  };
+  return { auth, alert, agentStore, accountStore, reportStore, dashboardStore };
 });
 
 export const getRenderStoreState = () => storeState;
@@ -323,6 +340,17 @@ vi.mock('../src/store/ReportStore', () => ({
     },
   ),
 }));
+vi.mock('../src/store/DashboardStore', () => ({
+  useDashboardStore: Object.assign(
+    (selector?: (state: typeof storeState.dashboardStore) => unknown) =>
+      selector ? selector(storeState.dashboardStore) : storeState.dashboardStore,
+    {
+      getState: () => storeState.dashboardStore,
+      setState: (patch: Partial<typeof storeState.dashboardStore>) =>
+        Object.assign(storeState.dashboardStore, patch),
+    },
+  ),
+}));
 
 export const agent = {
   id: 1,
@@ -343,6 +371,7 @@ export const resetRenderStores = () => {
   storeState.auth.bankName = 'Test Bank';
   storeState.auth.bankCode = 'BANK1';
   storeState.auth.city = 'Chennai';
+  storeState.auth.bankType = null;
   storeState.auth.subBranches = [];
   storeState.auth.isHydrated = true;
   storeState.alert.alert = { open: false, message: '', severity: 'success' };
@@ -367,6 +396,7 @@ export const resetRenderStores = () => {
     createDepositLoadingStatus: 'Idle',
     fetchPastDepositsLoadingStatus: 'Success',
     exportDepositLoadingStatus: 'Idle',
+    voidTransactionLoadingStatus: 'Idle',
     ResetDeviceStatus: 'Idle',
     pastDeposits: [
       {
@@ -403,6 +433,11 @@ export const resetRenderStores = () => {
     agents: [{ id: 1, name: 'Agent One', agentCode: 77, bankCode: 'BANK1' }],
     fetchAgents: vi.fn(),
     fetchReportData: vi.fn(),
+  });
+  Object.assign(storeState.dashboardStore, {
+    dashboardData: null,
+    dashboardLoadingStatus: 'Idle',
+    fetchDashboard: vi.fn(),
   });
 };
 

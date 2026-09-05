@@ -40,6 +40,7 @@ function Signin() {
       authStore.setBankName(respose.bankName);
       authStore.setBankCode(respose.bankCode);
       authStore.setCity(respose.city);
+      authStore.setBankType(respose.bankType);
       authStore.setSubBranches(respose.subBranches);
       navigate('/', { replace: true });
     } catch (error) {

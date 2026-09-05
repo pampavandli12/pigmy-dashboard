@@ -12,6 +12,7 @@ import type {
 import {
   createAgent,
   createDeposit,
+  deleteTransaction,
   deviceReset,
   exportDepositById,
   fetchAgentByCode,
@@ -43,6 +44,7 @@ type State = {
   createDepositLoadingStatus: Status;
   fetchPastDepositsLoadingStatus: Status;
   exportDepositLoadingStatus: Status;
+  voidTransactionLoadingStatus: Status;
   pastDeposits: PastDeposit[];
   ResetDeviceStatus: Status;
 };
@@ -73,6 +75,11 @@ type Action = {
     fromDate: string,
     toDate: string,
   ) => void;
+  voidTransaction: (
+    transactionId: number,
+    agentCode: number,
+    date: string,
+  ) => Promise<void>;
 };
 
 export const useAgentStore = create<State & Action>((set) => ({
@@ -87,6 +94,7 @@ export const useAgentStore = create<State & Action>((set) => ({
   createDepositLoadingStatus: Status.Idle,
   fetchPastDepositsLoadingStatus: Status.Idle,
   exportDepositLoadingStatus: Status.Idle,
+  voidTransactionLoadingStatus: Status.Idle,
   pastDeposits: [],
   ResetDeviceStatus: Status.Idle,
   setSelectedAgent: (agent) => set({ selectedAgent: agent }),
@@ -286,6 +294,33 @@ export const useAgentStore = create<State & Action>((set) => ({
       alertStore.showAlert(
         true,
         'Failed to reset device, please try again',
+        Severity.Error,
+      );
+    }
+  },
+  voidTransaction: async (
+    transactionId: number,
+    agentCode: number,
+    date: string,
+  ) => {
+    set({ voidTransactionLoadingStatus: Status.Loading });
+    const alertStore = useAlertStore.getState();
+    try {
+      await deleteTransaction(transactionId);
+      set({ transactions: [] });
+      await useAgentStore.getState().fetchTransactions(agentCode, date);
+      set({ voidTransactionLoadingStatus: Status.Success });
+      alertStore.showAlert(
+        true,
+        'Transaction voided successfully.',
+        Severity.Success,
+      );
+    } catch (error) {
+      console.error('Failed to void transaction:', error);
+      set({ voidTransactionLoadingStatus: Status.Error });
+      alertStore.showAlert(
+        true,
+        'Failed to void transaction. Please try again.',
         Severity.Error,
       );
     }

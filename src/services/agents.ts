@@ -12,7 +12,6 @@ import { api } from './axios';
 
 export const fetchAgents = async () => {
   const bankCode = useAuthStore.getState().bankCode; // Get bankCode from Zustand store
-
   return api
     .get(`${API_URLS.AGENT}?bankCode=${bankCode}`)
     .then((response) => response.data);
@@ -54,6 +53,11 @@ export const fetchTransactions = async (
     .get(
       `${API_URLS.AGENT_TRANSACTIONS}?agentCode=${agentCode}&bankCode=${bankCode}&date=${date}`,
     )
+    .then((response) => response.data);
+};
+export const deleteTransaction = async (transactionId: number) => {
+  return api
+    .delete(`${API_URLS.AGENT_TRANSACTIONS}?transactionId=${transactionId}`)
     .then((response) => response.data);
 };
 export const createDeposit = async (

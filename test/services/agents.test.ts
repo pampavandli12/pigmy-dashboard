@@ -17,6 +17,7 @@ const apiMock = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
   patch: vi.fn(),
+  delete: vi.fn(),
 }));
 
 vi.mock('../../src/services/axios', () => ({ api: apiMock }));
@@ -24,6 +25,7 @@ vi.mock('../../src/services/axios', () => ({ api: apiMock }));
 import {
   createAgent,
   createDeposit,
+  deleteTransaction,
   exportDepositById,
   fetchAgentByCode,
   fetchAgents,
@@ -41,6 +43,7 @@ describe('agents service', () => {
     apiMock.get.mockResolvedValue({ data: 'get-data' });
     apiMock.post.mockResolvedValue({ data: 'post-data' });
     apiMock.patch.mockResolvedValue({ data: 'patch-data' });
+    apiMock.delete.mockResolvedValue({ data: 'delete-data' });
   });
 
   it('calls agent read endpoints', async () => {
@@ -59,6 +62,11 @@ describe('agents service', () => {
     );
     expect(apiMock.get).toHaveBeenLastCalledWith(
       `${API_URLS.AGENT_TRANSACTIONS}?agentCode=77&bankCode=BANK1&date=2026-04-27`,
+    );
+
+    await expect(deleteTransaction(1830001)).resolves.toBe('delete-data');
+    expect(apiMock.delete).toHaveBeenLastCalledWith(
+      `${API_URLS.AGENT_TRANSACTIONS}?transactionId=1830001`,
     );
   });
 

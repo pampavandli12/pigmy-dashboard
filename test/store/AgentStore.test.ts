@@ -20,9 +20,11 @@ const agentApi = vi.hoisted(() => ({
   fetchAgentByCode: vi.fn(),
   updateAgent: vi.fn(),
   fetchTransactions: vi.fn(),
+  deleteTransaction: vi.fn(),
   createDeposit: vi.fn(),
   exportDepositById: vi.fn(),
   fetchPastDeposits: vi.fn(),
+  deviceReset: vi.fn(),
 }));
 const helperApi = vi.hoisted(() => ({
   generateDepositDatFile: vi.fn(),
@@ -70,7 +72,9 @@ const resetAgentStore = () => {
     createDepositLoadingStatus: Status.Idle,
     fetchPastDepositsLoadingStatus: Status.Idle,
     exportDepositLoadingStatus: Status.Idle,
+    voidTransactionLoadingStatus: Status.Idle,
     pastDeposits: [],
+    ResetDeviceStatus: Status.Idle,
   });
 };
 
@@ -120,6 +124,19 @@ describe('AgentStore', () => {
         totalDepositedAmount: 50,
       },
     ]);
+    agentApi.deleteTransaction.mockResolvedValue(undefined);
+    agentApi.fetchTransactions
+      .mockResolvedValueOnce([
+        {
+          trasactionId: 1,
+          accountNumber: 100,
+          customerName: 'Asha',
+          collectedAmount: 50,
+          status: 'C',
+          schemeName: 'Daily',
+        },
+      ])
+      .mockResolvedValueOnce([]);
 
     await useAgentStore.getState().fetchAgents();
     await useAgentStore.getState().createAgent(validAgentPayload);
@@ -141,6 +158,9 @@ describe('AgentStore', () => {
     await useAgentStore
       .getState()
       .fetchPastDeposits(77, '2026-04-01', '2026-04-27');
+    await useAgentStore
+      .getState()
+      .voidTransaction(1, 77, '2026-04-27');
 
     expect(useAgentStore.getState()).toMatchObject({
       agents: [agent],
@@ -151,8 +171,9 @@ describe('AgentStore', () => {
       createDepositLoadingStatus: Status.Success,
       exportDepositLoadingStatus: Status.Success,
       fetchPastDepositsLoadingStatus: Status.Success,
+      voidTransactionLoadingStatus: Status.Success,
     });
-    expect(useAgentStore.getState().transactions).toHaveLength(1);
+    expect(useAgentStore.getState().transactions).toHaveLength(0);
     expect(useAgentStore.getState().pastDeposits).toHaveLength(1);
     expect(agentApi.createDeposit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -185,6 +206,7 @@ describe('AgentStore', () => {
       response: { data: JSON.stringify({ error: 'export failed' }) },
     });
     agentApi.fetchPastDeposits.mockRejectedValue(new Error('past failed'));
+    agentApi.deleteTransaction.mockRejectedValue(new Error('void failed'));
 
     await useAgentStore.getState().fetchAgents();
     await useAgentStore.getState().createAgent(validAgentPayload);
@@ -206,6 +228,9 @@ describe('AgentStore', () => {
     await useAgentStore
       .getState()
       .fetchPastDeposits(77, '2026-04-01', '2026-04-27');
+    await useAgentStore
+      .getState()
+      .voidTransaction(1, 77, '2026-04-27');
 
     expect(useAgentStore.getState()).toMatchObject({
       fetchAgentLoadingStatus: Status.Error,
@@ -216,6 +241,7 @@ describe('AgentStore', () => {
       createDepositLoadingStatus: Status.Error,
       exportDepositLoadingStatus: Status.Error,
       fetchPastDepositsLoadingStatus: Status.Error,
+      voidTransactionLoadingStatus: Status.Error,
     });
     expect(useAlertStore.getState().alert.open).toBe(true);
   });

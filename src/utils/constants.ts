@@ -11,8 +11,8 @@ type Environment = 'development' | 'staging' | 'production';
 const getConfig = (env: Environment): AppConfig => {
   const configs: Record<Environment, AppConfig> = {
     development: {
-      apiDomain: 'https://pigmyapp-jomt.onrender.com',
-      //apiDomain: 'http://localhost:8080',
+      //apiDomain: 'https://pigmyapp-jomt.onrender.com',
+      apiDomain: 'http://localhost:8080',
       apiTimeout: 30000,
       logLevel: 'debug',
     },
@@ -46,6 +46,7 @@ export const API_URLS = {
   UPDATE_PHONY_BY_ACCOUNT: '/pigmy/v1/user/updateMobileNumber',
   REPORT: '/pigmy/v1/transaction/search',
   RESET_DEVICE: 'pigmy/v1/agent/revoke',
+  DASHBOARD: '/pigmy/v1/dashboard',
 };
 export const MOCK_DEPOSIT_RESPONSE: CreateDepositResponse = {
   agentCode: 1,

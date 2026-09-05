@@ -27,11 +27,13 @@ describe('AuthStore', () => {
     useAuthStore.getState().setToken('token');
     useAuthStore.getState().setBankName('Bank');
     useAuthStore.getState().setBankCode('BANK2');
+    useAuthStore.getState().setBankType('banksoft');
     useAuthStore.getState().setHydrated();
     expect(useAuthStore.getState()).toMatchObject({
       token: 'token',
       bankName: 'Bank',
       bankCode: 'BANK2',
+      bankType: 'banksoft',
       isHydrated: true,
     });
 
@@ -40,6 +42,7 @@ describe('AuthStore', () => {
       token: null,
       bankName: null,
       bankCode: null,
+      bankType: null,
     });
   });
 });

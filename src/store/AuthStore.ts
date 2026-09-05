@@ -1,24 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { LoginSubBranch } from '../types/sharedEnums';
 
-// describe the shape of the auth store
-interface SubBranch {
-  bankCode: string;
-  bankName: string;
-  city: string;
-}
 export interface AuthState {
   token: string | null;
   bankName: string | null;
   bankCode: string | null;
   city: string | null;
-  subBranches: SubBranch[];
+  bankType: string | null;
+  subBranches: LoginSubBranch[];
   isHydrated: boolean;
   setToken: (t: string) => void;
   setBankName: (b: string) => void;
   setBankCode: (c: string) => void;
   setCity: (city: string) => void;
-  setSubBranches: (subBranches: SubBranch[]) => void;
+  setBankType: (bankType: string) => void;
+  setSubBranches: (subBranches: LoginSubBranch[]) => void;
   setHydrated: () => void;
   logout: () => void;
 }
@@ -30,19 +27,22 @@ export const useAuthStore = create<AuthState>()(
       bankName: null,
       bankCode: null,
       city: null,
+      bankType: null,
       subBranches: [],
       isHydrated: false,
       setToken: (t: string) => set({ token: t }),
       setBankName: (b: string) => set({ bankName: b }),
       setBankCode: (c: string) => set({ bankCode: c }),
       setCity: (city: string) => set({ city }),
-      setSubBranches: (subBranches: SubBranch[]) => set({ subBranches }),
+      setBankType: (bankType: string) => set({ bankType }),
+      setSubBranches: (subBranches: LoginSubBranch[]) => set({ subBranches }),
       logout: () =>
         set({
           token: null,
           bankName: null,
           bankCode: null,
           city: null,
+          bankType: null,
           subBranches: [],
         }),
       setHydrated: () => set({ isHydrated: true }),

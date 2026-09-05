@@ -3,6 +3,21 @@ export type LoginPayload = {
   userName: string;
   password: string;
 };
+
+export type LoginSubBranch = {
+  bankCode: string;
+  bankName: string;
+  city: string;
+};
+
+export type LoginResponse = {
+  bankName: string;
+  bankCode: string;
+  token: string;
+  city: string;
+  subBranches: LoginSubBranch[];
+  bankType: string;
+};
 export const Status = {
   Idle: 'Idle',
   Loading: 'Loafing',

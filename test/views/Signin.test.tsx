@@ -44,6 +44,9 @@ describe('Signin', () => {
       token: 'new-token',
       bankName: 'New Bank',
       bankCode: 'NEW',
+      city: 'Chennai',
+      bankType: 'banksoft',
+      subBranches: [],
     });
 
     const inputs = Array.from(container.querySelectorAll('input'));

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Box, Button, Typography } from '@mui/material';
 import {
   DataGrid,
   GridToolbarFilterButton,
@@ -11,6 +11,7 @@ import type { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import AlertDialog from '../components/AlertDialog';
 import { useAgentStore } from '../store/AgentStore';
 import { Status, TransactionStatus } from '../types/sharedEnums';
 import { useParams } from 'react-router-dom';
@@ -24,50 +25,21 @@ type TransactionRow = {
   collectedAmount: number;
 };
 
-const columns: GridColDef<TransactionRow>[] = [
-  {
-    field: 'trasactionId',
-    headerName: 'Transaction ID',
-    type: 'number',
-    width: 150,
-  },
-  {
-    field: 'accountNumber',
-    headerName: 'Account Number',
-    type: 'number',
-    width: 150,
-  },
-  {
-    field: 'customerName',
-    headerName: 'Customer Name',
-    type: 'string',
-    flex: 1,
-    minWidth: 150,
-  },
-  {
-    field: 'status',
-    headerName: 'Status',
-    type: 'string',
-    width: 120,
-    valueFormatter: (params) => {
-      return TransactionStatus[params] || params;
-    },
-  },
-  {
-    field: 'collectedAmount',
-    headerName: 'Collected Amount',
-    type: 'number',
-    width: 150,
-  },
-];
-
 function Transactions() {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const [openVoidModal, setOpenVoidModal] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<
+    number | null
+  >(null);
   const transactions = useAgentStore((state) => state.transactions);
   const transactionsLoadingStatus = useAgentStore(
     (state) => state.fetchTransactionsLoadingStatus,
   );
+  const voidTransactionLoadingStatus = useAgentStore(
+    (state) => state.voidTransactionLoadingStatus,
+  );
   const fetchTransactions = useAgentStore((state) => state.fetchTransactions);
+  const voidTransaction = useAgentStore((state) => state.voidTransaction);
   const params = useParams();
 
   useEffect(() => {
@@ -82,6 +54,96 @@ function Transactions() {
   const isTransactionLoading = useMemo(
     () => transactionsLoadingStatus === Status.Loading,
     [transactionsLoadingStatus],
+  );
+
+  const isVoidingTransaction = useMemo(
+    () => voidTransactionLoadingStatus === Status.Loading,
+    [voidTransactionLoadingStatus],
+  );
+
+  const handleVoidClick = useCallback((transactionId: number) => {
+    setSelectedTransactionId(transactionId);
+    setOpenVoidModal(true);
+  }, []);
+
+  const handleCloseVoidModal = useCallback(() => {
+    if (isVoidingTransaction) return;
+    setOpenVoidModal(false);
+    setSelectedTransactionId(null);
+  }, [isVoidingTransaction]);
+
+  const handleConfirmVoid = useCallback(async () => {
+    if (!selectedTransactionId || !selectedDate || !params.agentCode) return;
+
+    await voidTransaction(
+      selectedTransactionId,
+      Number(params.agentCode),
+      selectedDate.format('YYYY-MM-DD'),
+    );
+    setOpenVoidModal(false);
+    setSelectedTransactionId(null);
+  }, [
+    params.agentCode,
+    selectedDate,
+    selectedTransactionId,
+    voidTransaction,
+  ]);
+
+  const columns = useMemo<GridColDef<TransactionRow>[]>(
+    () => [
+      {
+        field: 'trasactionId',
+        headerName: 'Transaction ID',
+        type: 'number',
+        width: 150,
+      },
+      {
+        field: 'accountNumber',
+        headerName: 'Account Number',
+        type: 'number',
+        width: 150,
+      },
+      {
+        field: 'customerName',
+        headerName: 'Customer Name',
+        type: 'string',
+        flex: 1,
+        minWidth: 150,
+      },
+      {
+        field: 'status',
+        headerName: 'Status',
+        type: 'string',
+        width: 120,
+        valueFormatter: (params) => {
+          return TransactionStatus[params] || params;
+        },
+      },
+      {
+        field: 'collectedAmount',
+        headerName: 'Collected Amount',
+        type: 'number',
+        width: 150,
+      },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 120,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+          <Button
+            size='small'
+            color='warning'
+            variant='outlined'
+            onClick={() => handleVoidClick(params.row.trasactionId)}
+          >
+            Void
+          </Button>
+        ),
+      },
+    ],
+    [handleVoidClick],
   );
 
   const TransactionsToolbar = () => (
@@ -128,6 +190,13 @@ function Transactions() {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ width: '100%' }}>
+        <AlertDialog
+          open={openVoidModal}
+          handleClose={handleCloseVoidModal}
+          handleConfirm={handleConfirmVoid}
+          title='Void transaction?'
+          description='This action will permanently void the selected transaction. Do you want to continue?'
+        />
         <Box sx={{ mb: 3 }}>
           <Typography variant='h4' sx={{ fontWeight: 700, mb: 0.5 }}>
             Transactions List
@@ -142,7 +211,7 @@ function Transactions() {
             autoHeight
             rows={transactions as unknown as TransactionRow[]}
             columns={columns}
-            loading={isTransactionLoading}
+            loading={isTransactionLoading || isVoidingTransaction}
             getRowId={(row) => row.trasactionId}
             slots={{
               noRowsOverlay: () => (

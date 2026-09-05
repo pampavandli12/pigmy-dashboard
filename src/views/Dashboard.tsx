@@ -1,168 +1,126 @@
-import {
-  Box,
-  Paper,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-} from "@mui/material";
+import { Box, Paper, Typography } from '@mui/material';
+import dayjs from 'dayjs';
+import { useEffect } from 'react';
+import LoadingComponent from '../components/LoadingComponent';
+import { useDashboardStore } from '../store/DashboardStore';
+import { Status } from '../types/sharedEnums';
+
+const LICENSE_WARNING_DAYS = 45;
+
+type DashboardCardProps = {
+  label: string;
+  value: string;
+  warning?: boolean;
+};
+
+function DashboardCard({ label, value, warning = false }: DashboardCardProps) {
+  return (
+    <Paper
+      elevation={1}
+      data-warning={warning ? 'true' : undefined}
+      sx={{
+        padding: 3,
+        borderRadius: 2,
+        backgroundColor: warning ? '#fff8e1' : '#ffffff',
+        border: warning ? '1px solid #ffb300' : '1px solid transparent',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: '14px',
+          color: warning ? '#e65100' : '#666666',
+          fontWeight: 500,
+          mb: 1,
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant='h5'
+        sx={{
+          fontWeight: 700,
+          color: warning ? '#e65100' : '#1a1a1a',
+          fontSize: '28px',
+        }}
+      >
+        {value}
+      </Typography>
+    </Paper>
+  );
+}
+
+function formatDashboardDate(date: string) {
+  return dayjs(date).format('DD/MM/YYYY');
+}
 
 function Dashboard() {
-  // Sample data for stats
-  const stats = [
-    { label: "Total Deposits Today", value: "₹12,500" },
-    { label: "Total Deposits This Month", value: "₹75,000" },
-    { label: "Active Agents", value: "25" },
-    { label: "License Purchased", value: "48" },
-  ];
+  const dashboardData = useDashboardStore((state) => state.dashboardData);
+  const dashboardLoadingStatus = useDashboardStore(
+    (state) => state.dashboardLoadingStatus,
+  );
+  const fetchDashboard = useDashboardStore((state) => state.fetchDashboard);
 
-  // Sample data for top performing agents
-  const agentsData = [
-    { name: "Agent 1", collections: "₹15,000" },
-    { name: "Agent 2", collections: "₹14,500" },
-    { name: "Agent 3", collections: "₹13,000" },
-    { name: "Agent 4", collections: "₹12,000" },
-    { name: "Agent 5", collections: "₹11,500" },
-  ];
+  useEffect(() => {
+    if (dashboardLoadingStatus === Status.Idle) {
+      fetchDashboard();
+    }
+  }, [dashboardLoadingStatus, fetchDashboard]);
+
+  if (dashboardLoadingStatus === Status.Loading) {
+    return <LoadingComponent />;
+  }
+
+  const showLicenseWarning =
+    dashboardData !== null && dashboardData.daysLeft < LICENSE_WARNING_DAYS;
+
+  const cards = dashboardData
+    ? [
+        {
+          label: 'Days Left',
+          value: String(dashboardData.daysLeft),
+          warning: showLicenseWarning,
+        },
+        {
+          label: 'Expiry Date',
+          value: formatDashboardDate(dashboardData.expiryDate),
+        },
+        {
+          label: 'Licenses Purchased',
+          value: String(dashboardData.NoOfLicencedPurchased),
+        },
+        {
+          label: 'Purchase Date',
+          value: formatDashboardDate(dashboardData.purchaseDate),
+        },
+      ]
+    : [];
 
   return (
-    <Box sx={{ width: "100%" }}>
-      {/* Title and Button */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 4,
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Dashboard
-        </Typography>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: "#1976d2",
-            color: "#ffffff",
-            textTransform: "none",
-            fontWeight: 600,
-            px: 3,
-            "&:hover": {
-              backgroundColor: "#1565c0",
-            },
-          }}
-        >
-          Purchase License
-        </Button>
-      </Box>
+    <Box sx={{ width: '100%' }}>
+      <Typography variant='h4' sx={{ fontWeight: 700, mb: 4 }}>
+        Dashboard
+      </Typography>
 
-      {/* Stats Grid */}
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(4, 1fr)",
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(4, 1fr)',
           },
           gap: 3,
-          mb: 4,
         }}
       >
-        {stats.map((stat, index) => (
-          <Paper
-            key={index}
-            elevation={1}
-            sx={{
-              padding: 3,
-              borderRadius: 2,
-              backgroundColor: "#ffffff",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "14px",
-                color: "#666666",
-                fontWeight: 500,
-                mb: 1,
-              }}
-            >
-              {stat.label}
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 700,
-                color: "#1a1a1a",
-                fontSize: "28px",
-              }}
-            >
-              {stat.value}
-            </Typography>
-          </Paper>
+        {cards.map((card) => (
+          <DashboardCard
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            warning={card.warning}
+          />
         ))}
       </Box>
-
-      {/* Top Performing Agents Table */}
-      <Paper elevation={1} sx={{ borderRadius: 2 }}>
-        <Box sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-            Top Performing Agents
-          </Typography>
-        </Box>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: "#333333",
-                    fontSize: "12px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Agent
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: "#333333",
-                    fontSize: "12px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Collections
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {agentsData.map((agent, index) => (
-                <TableRow
-                  key={index}
-                  sx={{
-                    borderBottom: "1px solid #f0f0f0",
-                    "&:hover": {
-                      backgroundColor: "#fafafa",
-                    },
-                  }}
-                >
-                  <TableCell sx={{ color: "#333333", fontWeight: 500 }}>
-                    {agent.name}
-                  </TableCell>
-                  <TableCell sx={{ color: "#1976d2", fontWeight: 600 }}>
-                    {agent.collections}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
     </Box>
   );
 }
