@@ -22,6 +22,7 @@ vi.mock('../../src/components/AgentForm', () => ({
       type: 'agent',
       status: 'active',
       limitAmount: 1000,
+      graceDays: 5,
     });
     return <div>Agent Code {JSON.stringify(defaultValues)}</div>;
   },

@@ -51,6 +51,7 @@ const agent: Agent = {
   type: 'agent',
   status: 'active',
   limitAmount: 1000,
+  graceDays: 5,
 };
 
 const validAgentPayload = {

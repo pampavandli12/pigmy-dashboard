@@ -22,6 +22,10 @@ describe('AgentForm', () => {
       'input[name="password"]',
     );
 
+    expect(container.innerHTML).toContain('Grace Days');
+    expect(
+      container.querySelector<HTMLInputElement>('input[name="graceDays"]')?.value,
+    ).toBe('5');
     expect(password?.value).toBe('654321');
     expect(password?.disabled).toBe(true);
     expect(password?.type).toBe('password');
@@ -37,8 +41,7 @@ describe('AgentForm', () => {
       container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
     });
     expect(callback).toHaveBeenCalledWith(
-      expect.objectContaining({ password: '654321' }),
-      expect.anything(),
+      expect.objectContaining({ password: '654321', graceDays: 5 }),
     );
     unmount();
   });
@@ -57,6 +60,7 @@ describe('AgentForm', () => {
     });
 
     expect(container.innerHTML).toContain('Select Type');
+    expect(container.innerHTML).not.toContain('Grace Days');
     expect(container.innerHTML).toContain('Save');
     const password = container.querySelector<HTMLInputElement>(
       'input[name="password"]',

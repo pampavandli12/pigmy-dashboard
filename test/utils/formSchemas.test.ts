@@ -4,6 +4,7 @@ import {
   createDepositSchema,
   depositFilterSchema,
   loginSchema,
+  updateAgentSchema,
 } from '../../src/utils/formSchemas';
 
 describe('formSchemas', () => {
@@ -32,6 +33,19 @@ describe('formSchemas', () => {
         limitAmount: '2500',
       }),
     ).toMatchObject({ agentCode: 101, limitAmount: 2500, status: 'active' });
+    expect(
+      updateAgentSchema.parse({
+        name: 'Ravi Kumar',
+        address: 'MG Road',
+        password: '654321',
+        phone: '9876543210',
+        email: 'ravi@example.com',
+        agentCode: '101',
+        type: 'agent',
+        limitAmount: '2500',
+        graceDays: '3',
+      }),
+    ).toMatchObject({ graceDays: 3 });
     expect(addAgentSchema.safeParse({}).success).toBe(false);
     expect(
       addAgentSchema.safeParse({

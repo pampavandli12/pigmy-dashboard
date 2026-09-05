@@ -36,6 +36,7 @@ export type Agent = {
   bankCode: string;
   type: 'agent' | 'employee';
   limitAmount: number;
+  graceDays: number;
   status: 'active' | 'inactive';
   password?: string;
 };

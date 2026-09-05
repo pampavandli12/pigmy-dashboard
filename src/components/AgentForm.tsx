@@ -23,8 +23,10 @@ import Container from '@mui/material/Container';
 import { useForm, Controller } from 'react-hook-form';
 import {
   addAgentSchema,
+  updateAgentSchema,
   type AddAgentFormInput,
   type AddAgentFormValues,
+  type UpdateAgentFormValues,
 } from '../utils/formSchemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
@@ -32,17 +34,21 @@ import { useEffect, useState } from 'react';
 const generateSixDigitPassword = () =>
   String(Math.floor(100000 + Math.random() * 900000));
 
-type AgentFormProps = {
-  defaultValues?: Partial<AddAgentFormValues> | null;
-  callback: (data: AddAgentFormValues) => void;
-  isUpdate?: boolean;
-};
+type AgentFormProps =
+  | {
+      isUpdate?: false;
+      defaultValues?: Partial<AddAgentFormValues> | null;
+      callback: (data: AddAgentFormValues) => void;
+    }
+  | {
+      isUpdate: true;
+      defaultValues?: Partial<UpdateAgentFormValues> | null;
+      callback: (data: UpdateAgentFormValues) => void;
+    };
 
-function AddAgent({
-  defaultValues = null,
-  callback,
-  isUpdate,
-}: AgentFormProps) {
+function AddAgent(props: AgentFormProps) {
+  const isUpdate = props.isUpdate === true;
+  const { defaultValues = null, callback } = props;
   const [initialPassword] = useState(generateSixDigitPassword);
   const [showPassword, setShowPassword] = useState(false);
   const {
@@ -52,7 +58,7 @@ function AddAgent({
     reset,
     setValue,
   } = useForm<AddAgentFormInput, unknown, AddAgentFormValues>({
-    resolver: zodResolver(addAgentSchema),
+    resolver: zodResolver(isUpdate ? updateAgentSchema : addAgentSchema),
     mode: 'onChange', // better UX
     defaultValues: {
       status: 'active',
@@ -74,6 +80,17 @@ function AddAgent({
     // Handle cancel action
     navigate(-1); // Go back to previous page
   };
+
+  const submitForm = handleSubmit((data) => {
+    if (isUpdate) {
+      (callback as (values: UpdateAgentFormValues) => void)(
+        data as UpdateAgentFormValues,
+      );
+      return;
+    }
+
+    (callback as (values: AddAgentFormValues) => void)(data);
+  });
 
   return (
     <Container
@@ -135,7 +152,7 @@ function AddAgent({
         >
           <Box
             component='form'
-            onSubmit={handleSubmit(callback)}
+            onSubmit={submitForm}
             noValidate
             sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
           >
@@ -521,6 +538,42 @@ function AddAgent({
                 )}
               />
             </Box>
+            {isUpdate && (
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#333333',
+                    mb: 1,
+                  }}
+                >
+                  Grace Days
+                </Typography>
+                <Controller
+                  name='graceDays'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      fullWidth
+                      {...field}
+                      name='graceDays'
+                      type='number'
+                      placeholder='Enter grace days'
+                      error={!!errors.graceDays}
+                      helperText={errors.graceDays?.message}
+                      variant='outlined'
+                      size='medium'
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '6px',
+                        },
+                      }}
+                    />
+                  )}
+                />
+              </Box>
+            )}
             {/* Action Buttons */}
             <Box
               sx={{

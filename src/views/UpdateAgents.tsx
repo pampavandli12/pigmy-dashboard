@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Status } from '../types/sharedEnums';
 import { Container } from '@mui/material';
 import AgentForm from '../components/AgentForm';
-import type { AddAgentFormValues } from '../utils/formSchemas';
+import type { UpdateAgentFormValues } from '../utils/formSchemas';
 import LoadingComponent from '../components/LoadingComponent';
 
 export default function UpdateAgents() {
@@ -42,7 +42,7 @@ export default function UpdateAgents() {
   if (fetchAgentByCodeLoadingStatus === Status.Loading) {
     return <LoadingComponent />;
   }
-  const handleSubmit = async (data: AddAgentFormValues) => {
+  const handleSubmit = async (data: UpdateAgentFormValues) => {
     try {
       await updateAgent(params.agentCode as string, {
         ...data,
@@ -69,7 +69,8 @@ export default function UpdateAgents() {
             status: agentData?.status,
             agentCode: agentData?.agentCode,
             password: agentData?.password,
-          } as AddAgentFormValues
+            graceDays: agentData?.graceDays,
+          } as UpdateAgentFormValues
         }
         callback={(data) => handleSubmit(data)}
         isUpdate={true}

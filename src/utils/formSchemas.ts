@@ -64,10 +64,31 @@ export const addAgentSchema = z.object({
         iss.input === undefined ? 'Field is required.' : 'Invalid input.',
     })
     .positive('Limit amount must be positive'),
+
+  graceDays: z.coerce
+    .number({
+      error: (iss) =>
+        iss.input === undefined ? 'Field is required.' : 'Invalid input.',
+    })
+    .int('Grace days must be a whole number')
+    .min(0, 'Grace days must be 0 or more')
+    .optional(),
 });
 
 export type AddAgentFormInput = z.input<typeof addAgentSchema>;
 export type AddAgentFormValues = z.output<typeof addAgentSchema>;
+
+export const updateAgentSchema = addAgentSchema.extend({
+  graceDays: z.coerce
+    .number({
+      error: (iss) =>
+        iss.input === undefined ? 'Field is required.' : 'Invalid input.',
+    })
+    .int('Grace days must be a whole number')
+    .min(0, 'Grace days must be 0 or more'),
+});
+
+export type UpdateAgentFormValues = z.output<typeof updateAgentSchema>;
 
 // Create Deposit form validation schema using Zod
 export const createDepositSchema = z.object({

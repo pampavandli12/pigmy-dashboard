@@ -363,6 +363,7 @@ export const agent = {
   type: 'agent',
   status: 'active',
   limitAmount: 1000,
+  graceDays: 5,
   password: '654321',
 } as const;
 
