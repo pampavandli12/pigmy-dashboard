@@ -11,8 +11,8 @@ type Environment = 'development' | 'staging' | 'production';
 const getConfig = (env: Environment): AppConfig => {
   const configs: Record<Environment, AppConfig> = {
     development: {
-      //apiDomain: 'https://pigmyapp-jomt.onrender.com',
-      apiDomain: 'http://localhost:8080',
+      apiDomain: 'https://pigmyapp-jomt.onrender.com',
+      //apiDomain: 'http://localhost:8080',
       apiTimeout: 30000,
       logLevel: 'debug',
     },

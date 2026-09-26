@@ -1,10 +1,12 @@
 import { banksoftHandler } from './banksoft';
+import { peocitHandler } from './peocit';
 import type { BankTypeHandler } from './types';
 
 export const DEFAULT_BANK_TYPE = 'banksoft';
 
 const bankTypeHandlers: Record<string, BankTypeHandler> = {
   banksoft: banksoftHandler,
+  peocit: peocitHandler,
 };
 
 // Sessions persisted before bankType existed have it as null, so fall back to the default.

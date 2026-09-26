@@ -1,5 +1,5 @@
 import axios from "axios";
-import { appConfig } from "../utils/constants";
+import { API_URLS, appConfig } from "../utils/constants";
 import { useAuthStore } from "../store/AuthStore";
 
 export const api = axios.create({
@@ -12,11 +12,16 @@ export const api = axios.create({
 // Interceptor for adding auth token and logging requests/responses
 api.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().token; // Get token from Zustand store
+    const { token, bankType } = useAuthStore.getState(); // Get auth details from Zustand store
 
     console.debug("API Request:", config);
     config.headers["Content-Type"] = "application/json";
     config.headers["Authorization"] = `${token || ""}`;
+    // Every API except login is scoped to a bank type; the backend uses this header
+    // to select the correct bank-specific behaviour.
+    if (config.url !== API_URLS.LOGIN) {
+      config.headers["bankType"] = bankType ?? "";
+    }
     return config;
   },
   (error) => {

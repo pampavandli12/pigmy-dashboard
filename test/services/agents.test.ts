@@ -25,8 +25,10 @@ vi.mock('../../src/services/axios', () => ({ api: apiMock }));
 import {
   createAgent,
   createBanksoftDeposit,
+  createPeocitDeposit,
   deleteTransaction,
   exportDepositById,
+  exportPeocitDepositById,
   fetchAgentByCode,
   fetchAgents,
   fetchPastDeposits,
@@ -113,6 +115,12 @@ describe('agents service', () => {
       { ...depositPayload },
     );
 
+    await expect(createPeocitDeposit(depositPayload)).resolves.toBe('post-data');
+    expect(apiMock.post).toHaveBeenLastCalledWith(
+      API_URLS.CREATE_DEPOSIT.peocit,
+      { ...depositPayload },
+    );
+
 
     await expect(
       fetchPastDeposits({
@@ -129,6 +137,13 @@ describe('agents service', () => {
     await expect(exportDepositById(5, 77, '2026-04-01', 900)).resolves.toBe(
       'get-data',
     );
+    expect(apiMock.get).toHaveBeenLastCalledWith(
+      `${API_URLS.EXPORT_DEPOSITE_BY_ID}?depositId=5&bankCode=BANK1&agentCode=77&date=2026-04-01&depositedAmount=900`,
+    );
+
+    await expect(
+      exportPeocitDepositById(5, 77, '2026-04-01', 900),
+    ).resolves.toBe('get-data');
     expect(apiMock.get).toHaveBeenLastCalledWith(
       `${API_URLS.EXPORT_DEPOSITE_BY_ID}?depositId=5&bankCode=BANK1&agentCode=77&date=2026-04-01&depositedAmount=900`,
     );

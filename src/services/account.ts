@@ -2,6 +2,7 @@ import { useAuthStore } from '../store/AuthStore';
 import type {
   AccountsResponse,
   AccountUpdatePayload,
+  UploadPeocitAccountPayload,
   UploadUserAccountPayload,
 } from '../types/Accounts';
 import { API_URLS } from '../utils/constants';
@@ -12,6 +13,13 @@ export const uploadBanksoftAccounts = async (
 ): Promise<unknown> => {
   return api
     .post(API_URLS.UPLOAD_ACCOUNTS.banksoft, accountData)
+    .then((response) => response.data);
+};
+export const uploadPeocitAccounts = async (
+  accountData: UploadPeocitAccountPayload,
+): Promise<unknown> => {
+  return api
+    .post(API_URLS.UPLOAD_ACCOUNTS.peocit, accountData)
     .then((response) => response.data);
 };
 export const fetchUserAccounts = async (): Promise<AccountsResponse> => {

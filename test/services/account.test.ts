@@ -26,6 +26,7 @@ import {
   updateUserAccounts,
   UpdateUserPhoneNumber,
   uploadBanksoftAccounts,
+  uploadPeocitAccounts,
 } from '../../src/services/account';
 import { useAuthStore } from '../../src/store/AuthStore';
 import { API_URLS } from '../../src/utils/constants';
@@ -52,6 +53,18 @@ describe('account service', () => {
       uploadPayload,
     );
 
+
+    const peocitPayload = {
+      agentCode: 1001,
+      bankCode: 'BANK1',
+      vpncode: '380292',
+      users: [],
+    };
+    await expect(uploadPeocitAccounts(peocitPayload)).resolves.toBe('post-data');
+    expect(apiMock.post).toHaveBeenLastCalledWith(
+      API_URLS.UPLOAD_ACCOUNTS.peocit,
+      peocitPayload,
+    );
 
     const updatePayload = {
       bankCode: 'BANK1',

@@ -1,14 +1,12 @@
-import dayjs from 'dayjs';
-import { createBanksoftDeposit } from '../services/agents';
+import {
+  createBanksoftDeposit,
+  exportDepositById,
+} from '../services/agents';
 import { uploadBanksoftAccounts } from '../services/account';
 import type { UploadUserAccountPayload } from '../types/Accounts';
-import type { CreateDepositPayload } from '../types/Agent';
 import { generateDepositDatFile } from '../utils/helpers';
-import type {
-  BankTypeHandler,
-  CreateDepositInput,
-  UploadAccountsInput,
-} from './types';
+import { buildCreateDepositPayload } from './depositPayload';
+import type { BankTypeHandler, UploadAccountsInput } from './types';
 
 const buildUploadAccountsPayload = ({
   fileContent,
@@ -38,27 +36,21 @@ const buildUploadAccountsPayload = ({
   return { agentCode: Number(agentCode), bankCode, users: userList };
 };
 
-const buildCreateDepositPayload = ({
-  agentCode,
-  agentName,
-  bankCode,
-  formValues,
-}: CreateDepositInput): CreateDepositPayload => ({
-  name: agentName,
-  agentCode,
-  bankCode,
-  depositingAmount: formValues.depositingAmount,
-  voucherId: formValues.voucherId,
-  from: dayjs(formValues.dateRange.startDate).format('YYYY-MM-DD'),
-  to: dayjs(formValues.dateRange.endDate).format('YYYY-MM-DD'),
-});
-
 export const banksoftHandler: BankTypeHandler = {
   uploadAccounts: (input) =>
     uploadBanksoftAccounts(buildUploadAccountsPayload(input)),
   createDeposit: async (input) => {
     const response = await createBanksoftDeposit(
       buildCreateDepositPayload(input),
+    );
+    generateDepositDatFile(response);
+  },
+  exportDeposit: async ({ depositId, agentCode, date, depositedAmount }) => {
+    const response = await exportDepositById(
+      depositId,
+      agentCode,
+      date,
+      depositedAmount,
     );
     generateDepositDatFile(response);
   },

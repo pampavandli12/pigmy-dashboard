@@ -13,7 +13,6 @@ import {
   createAgent,
   deleteTransaction,
   deviceReset,
-  exportDepositById,
   fetchAgentByCode,
   fetchAgents,
   fetchPastDeposits,
@@ -27,7 +26,6 @@ import type {
 } from '../types/Agent';
 import { useAuthStore } from './AuthStore';
 import { getBankTypeHandler } from '../bankTypes';
-import { generateDepositDatFile } from '../utils/helpers';
 
 type State = {
   fetchAgentLoadingStatus: Status;
@@ -220,14 +218,14 @@ export const useAgentStore = create<State & Action>((set) => ({
   ) => {
     set({ exportDepositLoadingStatus: Status.Loading });
     const showAlert = useAlertStore.getState().showAlert;
+    const { bankType } = useAuthStore.getState();
     try {
-      const response = await exportDepositById(
-        depositeId,
+      await getBankTypeHandler(bankType).exportDeposit({
+        depositId: depositeId,
         agentCode,
         date,
         depositedAmount,
-      );
-      generateDepositDatFile(response);
+      });
       set({ exportDepositLoadingStatus: Status.Success });
       showAlert(true, 'Deposit exported successfully!', 'success');
     } catch (error) {

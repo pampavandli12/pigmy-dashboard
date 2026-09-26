@@ -22,18 +22,25 @@ const agentApi = vi.hoisted(() => ({
   fetchTransactions: vi.fn(),
   deleteTransaction: vi.fn(),
   createBanksoftDeposit: vi.fn(),
+  createPeocitDeposit: vi.fn(),
   exportDepositById: vi.fn(),
+  exportPeocitDepositById: vi.fn(),
   fetchPastDeposits: vi.fn(),
   deviceReset: vi.fn(),
 }));
 const helperApi = vi.hoisted(() => ({
   generateDepositDatFile: vi.fn(),
+  generatePeocitDepositDatFile: vi.fn(),
 }));
 
 vi.mock('../../src/services/agents', () => agentApi);
 vi.mock('../../src/utils/helpers', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/utils/helpers')>();
-  return { ...actual, generateDepositDatFile: helperApi.generateDepositDatFile };
+  return {
+    ...actual,
+    generateDepositDatFile: helperApi.generateDepositDatFile,
+    generatePeocitDepositDatFile: helperApi.generatePeocitDepositDatFile,
+  };
 });
 
 import { useAgentStore } from '../../src/store/AgentStore';
@@ -60,7 +67,7 @@ const validAgentPayload = {
 };
 
 const resetAgentStore = () => {
-  useAuthStore.setState({ bankCode: 'BANK1' });
+  useAuthStore.setState({ bankCode: 'BANK1', bankType: null });
   useAgentStore.setState({
     fetchAgentLoadingStatus: Status.Idle,
     createAgentLoadingStatus: Status.Idle,
@@ -193,6 +200,50 @@ describe('AgentStore', () => {
       selectedAgent: null,
       createAgentLoadingStatus: Status.Idle,
       updateAgentLoadingStatus: Status.Idle,
+    });
+  });
+
+  it('routes deposit and export through the peocit handler when bankType is peocit', async () => {
+    useAuthStore.setState({ bankType: 'peocit', bankCode: 'PEO123' });
+    useAgentStore.setState({ agents: [agent] });
+    const peocitResponse = {
+      agentCode: 1001,
+      bankCode: 'PEO123',
+      totalDepositedAmount: 150,
+      depositedDate: '21.09.26',
+      users: [],
+    };
+    agentApi.createPeocitDeposit.mockResolvedValue(peocitResponse);
+    agentApi.exportPeocitDepositById.mockResolvedValue(peocitResponse);
+
+    await useAgentStore.getState().createDeposit(
+      {
+        depositingAmount: 150,
+        voucherId: '4e56',
+        dateRange: {
+          startDate: '2026-09-15T00:00:00.000Z',
+          endDate: '2026-09-17T00:00:00.000Z',
+        },
+      },
+      77,
+    );
+    await useAgentStore.getState().exportDepositeById(5, 77, '2026-09-17', 150);
+
+    expect(agentApi.createPeocitDeposit).toHaveBeenCalledTimes(1);
+    expect(agentApi.exportPeocitDepositById).toHaveBeenCalledWith(
+      5,
+      77,
+      '2026-09-17',
+      150,
+    );
+    expect(helperApi.generatePeocitDepositDatFile).toHaveBeenCalledTimes(2);
+    // Banksoft paths stay untouched — bank logic is isolated by bankType.
+    expect(agentApi.createBanksoftDeposit).not.toHaveBeenCalled();
+    expect(agentApi.exportDepositById).not.toHaveBeenCalled();
+    expect(helperApi.generateDepositDatFile).not.toHaveBeenCalled();
+    expect(useAgentStore.getState()).toMatchObject({
+      createDepositLoadingStatus: Status.Success,
+      exportDepositLoadingStatus: Status.Success,
     });
   });
 

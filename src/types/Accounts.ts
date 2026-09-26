@@ -27,6 +27,19 @@ export type UploadUserAccountPayload = {
   >;
 };
 
+export type UploadPeocitAccountPayload = {
+  agentCode: number;
+  bankCode: string;
+  vpncode: string;
+  users: Array<{
+    schemeId: string;
+    customerName: string;
+    accountNumber: string;
+    currentBalance: number;
+    lastDepositDate: string;
+  }>;
+};
+
 export type ParsedPhoneNumberRow = {
   accountNumber: number;
   mobilenumber: number;
