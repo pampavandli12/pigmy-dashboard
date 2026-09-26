@@ -16,11 +16,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
-import type {
-  AccountFetchResponse,
-  UploadUserAccountPayload,
-} from '../types/Accounts';
-import { useAuthStore } from '../store/AuthStore';
+import type { AccountFetchResponse } from '../types/Accounts';
 import { Severity, Status } from '../types/sharedEnums';
 import { useAccountStore } from '../store/AccountStore';
 import { useAgentStore } from '../store/AgentStore';
@@ -51,7 +47,6 @@ const isValidPhoneNumber = (value: unknown) =>
 
 function AccountsView() {
   const [agentFilter, setAgentFilter] = useState<string[]>([]);
-  const bankCode = useAuthStore((state) => state.bankCode);
   const uploadUserAccountLoading = useAccountStore(
     (state) => state.uploadUserAccountStatus,
   );
@@ -99,33 +94,7 @@ function AccountsView() {
       if (!event.target) return;
       const content = event.target.result;
       if (!content || typeof content !== 'string') return;
-      const lines = content.split('\n');
-      const [agent, ...users] = lines;
-      const userList: UploadUserAccountPayload['users'] = [];
-      users.forEach((element) => {
-        const [
-          schemeId,
-          accountNumber,
-          ,
-          customerName,
-          currentBalance,
-          lastDepositDate,
-        ] = element.split(',');
-        if (!accountNumber || !customerName) return; // skip invalid lines
-        userList.push({
-          schemeId,
-          accountNumber: Number(accountNumber),
-          customerName,
-          currentBalance: Number(currentBalance),
-          lastDepositDate,
-        });
-      });
-      const [, agentCode] = agent.split(',');
-      await uploadUserAccount({
-        agentCode: Number(agentCode),
-        bankCode: bankCode || '',
-        users: userList,
-      });
+      await uploadUserAccount(content);
     };
     reader.readAsText(file); // 👈 key
   };

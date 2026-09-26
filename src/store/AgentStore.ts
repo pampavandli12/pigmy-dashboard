@@ -11,7 +11,6 @@ import type {
 } from '../utils/formSchemas';
 import {
   createAgent,
-  createDeposit,
   deleteTransaction,
   deviceReset,
   exportDepositById,
@@ -23,13 +22,11 @@ import {
 } from '../services/agents';
 import { useAlertStore } from './AlertStore';
 import type {
-  CreateDepositPayload,
-  CreateDepositResponse,
   PastDeposit,
   TransactionsResponse,
 } from '../types/Agent';
 import { useAuthStore } from './AuthStore';
-import dayjs from 'dayjs';
+import { getBankTypeHandler } from '../bankTypes';
 import { generateDepositDatFile } from '../utils/helpers';
 
 type State = {
@@ -182,25 +179,20 @@ export const useAgentStore = create<State & Action>((set) => ({
     // Implement the logic to create a deposit using the form values
     // You can call an API service here and handle the response accordingly
     set({ createDepositLoadingStatus: Status.Loading });
-    const bankCode = useAuthStore.getState().bankCode; // Get bankCode from Zustand store
+    const { bankCode, bankType } = useAuthStore.getState();
     const showAlert = useAlertStore.getState().showAlert;
     const agentName =
       useAgentStore
         .getState()
         .agents.find((agent) => agent.agentCode === agentCode)?.name ||
       'Unknown Agent';
-    const payload: CreateDepositPayload = {
-      name: agentName,
-      agentCode: agentCode,
-      bankCode: bankCode || '',
-      depositingAmount: formValues.depositingAmount,
-      voucherId: formValues.voucherId,
-      from: dayjs(formValues.dateRange.startDate).format('YYYY-MM-DD'),
-      to: dayjs(formValues.dateRange.endDate).format('YYYY-MM-DD'),
-    };
     try {
-      const response: CreateDepositResponse = await createDeposit(payload);
-      generateDepositDatFile(response);
+      await getBankTypeHandler(bankType).createDeposit({
+        agentCode,
+        agentName,
+        bankCode: bankCode || '',
+        formValues,
+      });
       set({ createDepositLoadingStatus: Status.Success });
       showAlert(
         true,

@@ -60,11 +60,11 @@ export const deleteTransaction = async (transactionId: number) => {
     .delete(`${API_URLS.AGENT_TRANSACTIONS}?transactionId=${transactionId}`)
     .then((response) => response.data);
 };
-export const createDeposit = async (
+export const createBanksoftDeposit = async (
   payload: CreateDepositPayload,
 ): Promise<CreateDepositResponse> => {
   return api
-    .post(API_URLS.CREATE_DEPOSIT, { ...payload })
+    .post(API_URLS.CREATE_DEPOSIT.banksoft, { ...payload })
     .then((response) => response.data);
 };
 export const fetchPastDeposits = async (paylaod: PastDepositPayload) => {

@@ -25,7 +25,7 @@ import {
   fetchUserAccounts,
   updateUserAccounts,
   UpdateUserPhoneNumber,
-  uploadUserAccount,
+  uploadBanksoftAccounts,
 } from '../../src/services/account';
 import { useAuthStore } from '../../src/store/AuthStore';
 import { API_URLS } from '../../src/utils/constants';
@@ -46,11 +46,12 @@ describe('account service', () => {
     );
 
     const uploadPayload = { agentCode: 77, bankCode: 'BANK1', users: [] };
-    await expect(uploadUserAccount(uploadPayload)).resolves.toBe('post-data');
+    await expect(uploadBanksoftAccounts(uploadPayload)).resolves.toBe('post-data');
     expect(apiMock.post).toHaveBeenLastCalledWith(
-      API_URLS.UPLOAD_ACCOUNTS,
+      API_URLS.UPLOAD_ACCOUNTS.banksoft,
       uploadPayload,
     );
+
 
     const updatePayload = {
       bankCode: 'BANK1',

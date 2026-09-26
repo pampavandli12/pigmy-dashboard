@@ -3,7 +3,6 @@ import {
   fetchUserAccounts,
   updateUserAccounts,
   UpdateUserPhoneNumber,
-  uploadUserAccount,
 } from '../services/account';
 import { useAlertStore } from './AlertStore';
 import { Severity, Status } from '../types/sharedEnums';
@@ -11,21 +10,21 @@ import type {
   AccountFetchResponse,
   AccountUpdatePayload,
   ParsedPhoneNumberRow,
-  UploadUserAccountPayload,
 } from '../types/Accounts';
 import { mapAccountsToAgents } from '../utils/helpers';
 import { useAgentStore } from './AgentStore';
 import { useAuthStore } from './AuthStore';
+import { getBankTypeHandler } from '../bankTypes';
 
 interface AccountState {
   uploadUserAccountStatus: Status;
-  uploadUserAccount: (accountData: UploadUserAccountPayload) => Promise<void>;
+  uploadUserAccount: (fileContent: string) => Promise<void>;
   userAccounts: AccountFetchResponse;
   userAccountsLoadingStatus: Status;
   userPhoneNumberUpdateStatus: Status;
 }
 type Action = {
-  uploadUserAccount: (accountData: UploadUserAccountPayload) => Promise<void>;
+  uploadUserAccount: (fileContent: string) => Promise<void>;
   fetchUserAccounts: () => Promise<void>;
   updateUserAccounts: (accounts: ParsedPhoneNumberRow[]) => Promise<void>;
   updateUserPhoneNumber: (
@@ -70,12 +69,16 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
       );
     }
   },
-  uploadUserAccount: async (accountData: UploadUserAccountPayload) => {
+  uploadUserAccount: async (fileContent: string) => {
     const alertStore = useAlertStore.getState();
+    const { bankCode, bankType } = useAuthStore.getState();
     set({ uploadUserAccountStatus: Status.Loading });
 
     try {
-      await uploadUserAccount(accountData);
+      await getBankTypeHandler(bankType).uploadAccounts({
+        fileContent,
+        bankCode: bankCode || '',
+      });
       set({ uploadUserAccountStatus: Status.Success });
       alertStore.showAlert(
         true,

@@ -15,7 +15,8 @@ describe('constants', () => {
     expect(API_URLS).toMatchObject({
       LOGIN: '/pigmy/v1/login',
       AGENT: '/pigmy/v1/agent',
-      CREATE_DEPOSIT: '/pigmy/v1/agent/deposit/multipleDate',
+      UPLOAD_ACCOUNTS: { banksoft: '/pigmy/v1/user' },
+      CREATE_DEPOSIT: { banksoft: '/pigmy/v1/agent/deposit/multipleDate' },
     });
     expect(MOCK_DEPOSIT_RESPONSE.users).toHaveLength(2);
   });

@@ -21,7 +21,7 @@ const agentApi = vi.hoisted(() => ({
   updateAgent: vi.fn(),
   fetchTransactions: vi.fn(),
   deleteTransaction: vi.fn(),
-  createDeposit: vi.fn(),
+  createBanksoftDeposit: vi.fn(),
   exportDepositById: vi.fn(),
   fetchPastDeposits: vi.fn(),
   deviceReset: vi.fn(),
@@ -102,7 +102,7 @@ describe('AgentStore', () => {
       },
     ]);
     agentApi.updateAgent.mockResolvedValue({ ...agent, name: 'Updated' });
-    agentApi.createDeposit.mockResolvedValue({
+    agentApi.createBanksoftDeposit.mockResolvedValue({
       agentCode: 77,
       bankCode: 'BANK1',
       totalDepositedAmount: 50,
@@ -176,7 +176,7 @@ describe('AgentStore', () => {
     });
     expect(useAgentStore.getState().transactions).toHaveLength(0);
     expect(useAgentStore.getState().pastDeposits).toHaveLength(1);
-    expect(agentApi.createDeposit).toHaveBeenCalledWith(
+    expect(agentApi.createBanksoftDeposit).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Agent One',
         bankCode: 'BANK1',
@@ -202,7 +202,7 @@ describe('AgentStore', () => {
     agentApi.fetchAgentByCode.mockRejectedValue(new Error('lookup failed'));
     agentApi.fetchTransactions.mockRejectedValue(new Error('tx failed'));
     agentApi.updateAgent.mockRejectedValue(new Error('update failed'));
-    agentApi.createDeposit.mockRejectedValue({ message: 'deposit failed' });
+    agentApi.createBanksoftDeposit.mockRejectedValue({ message: 'deposit failed' });
     agentApi.exportDepositById.mockRejectedValue({
       response: { data: JSON.stringify({ error: 'export failed' }) },
     });
@@ -250,7 +250,7 @@ describe('AgentStore', () => {
   it('covers deposit fallback branches', async () => {
     useAuthStore.setState({ bankCode: null });
 
-    agentApi.createDeposit.mockResolvedValue({
+    agentApi.createBanksoftDeposit.mockResolvedValue({
       agentCode: 404,
       bankCode: '',
       totalDepositedAmount: 50,
@@ -270,7 +270,7 @@ describe('AgentStore', () => {
       },
       404,
     );
-    expect(agentApi.createDeposit).toHaveBeenLastCalledWith(
+    expect(agentApi.createBanksoftDeposit).toHaveBeenLastCalledWith(
       expect.objectContaining({
         name: 'Unknown Agent',
         bankCode: '',
@@ -284,7 +284,7 @@ describe('AgentStore', () => {
       expect.objectContaining({ bankCode: '' }),
     );
 
-    agentApi.createDeposit.mockRejectedValue({ response: { data: '{}' } });
+    agentApi.createBanksoftDeposit.mockRejectedValue({ response: { data: '{}' } });
     await useAgentStore.getState().createDeposit(
       {
         depositingAmount: 50,
@@ -301,7 +301,7 @@ describe('AgentStore', () => {
       severity: 'error',
     });
 
-    agentApi.createDeposit.mockRejectedValue({});
+    agentApi.createBanksoftDeposit.mockRejectedValue({});
     await useAgentStore.getState().createDeposit(
       {
         depositingAmount: 50,
@@ -331,5 +331,30 @@ describe('AgentStore', () => {
       message: 'Unknown error',
       severity: 'error',
     });
+  });
+
+  it('reports an error for an unsupported bank type on deposit', async () => {
+    useAuthStore.setState({ bankType: 'unknown' });
+
+    await useAgentStore.getState().createDeposit(
+      {
+        depositingAmount: 50,
+        voucherId: 'V9',
+        dateRange: {
+          startDate: '2026-04-01T00:00:00.000Z',
+          endDate: '2026-04-02T00:00:00.000Z',
+        },
+      },
+      77,
+    );
+
+    expect(agentApi.createBanksoftDeposit).not.toHaveBeenCalled();
+    expect(useAgentStore.getState().createDepositLoadingStatus).toBe(
+      Status.Error,
+    );
+    expect(useAlertStore.getState().alert.message).toBe(
+      'Unsupported bank type: unknown',
+    );
+    useAuthStore.setState({ bankType: null });
   });
 });

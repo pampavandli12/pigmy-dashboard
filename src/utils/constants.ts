@@ -11,8 +11,8 @@ type Environment = 'development' | 'staging' | 'production';
 const getConfig = (env: Environment): AppConfig => {
   const configs: Record<Environment, AppConfig> = {
     development: {
-      apiDomain: 'https://pigmyapp-jomt.onrender.com',
-      //apiDomain: 'http://localhost:8080',
+      //apiDomain: 'https://pigmyapp-jomt.onrender.com',
+      apiDomain: 'http://localhost:8080',
       apiTimeout: 30000,
       logLevel: 'debug',
     },
@@ -37,9 +37,15 @@ export const API_URLS = {
   LOGIN: '/pigmy/v1/login',
   AGENT: '/pigmy/v1/agent',
   AGENT_TRANSACTIONS: '/pigmy/v1/transaction',
-  UPLOAD_ACCOUNTS: '/pigmy/v1/user',
+  UPLOAD_ACCOUNTS: {
+    banksoft: '/pigmy/v1/user',
+    peocit: '/pigmy/v1/user/peocit',
+  },
   USER_ACCOUNTS: '/pigmy/v1/user',
-  CREATE_DEPOSIT: '/pigmy/v1/agent/deposit/multipleDate',
+  CREATE_DEPOSIT: {
+    banksoft: '/pigmy/v1/agent/deposit/multipleDate',
+    peocit: '/pigmy/v1/agent/deposit/multipleDate/peocit',
+  },
   PAST_DEPOSITS: '/pigmy/v1/agent/pastDeposits',
   EXPORT_DEPOSITE_BY_ID: 'pigmy/v1/agent/export',
   UPDATE_PHONE: '/pigmy/v1/user/upload/mobilenumbers',

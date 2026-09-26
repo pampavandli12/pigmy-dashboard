@@ -7,11 +7,11 @@ import type {
 import { API_URLS } from '../utils/constants';
 import { api } from './axios';
 
-export const uploadUserAccount = async (
+export const uploadBanksoftAccounts = async (
   accountData: UploadUserAccountPayload,
 ): Promise<unknown> => {
   return api
-    .post(API_URLS.UPLOAD_ACCOUNTS, accountData)
+    .post(API_URLS.UPLOAD_ACCOUNTS.banksoft, accountData)
     .then((response) => response.data);
 };
 export const fetchUserAccounts = async (): Promise<AccountsResponse> => {
