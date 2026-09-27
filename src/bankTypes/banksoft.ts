@@ -1,20 +1,24 @@
-import {
-  createBanksoftDeposit,
-  exportDepositById,
-} from '../services/agents';
+import { createBanksoftDeposit, exportDepositById } from '../services/agents';
+import type { CreateDepositResponse } from '../types/Agent';
 import { uploadBanksoftAccounts } from '../services/account';
 import type { UploadUserAccountPayload } from '../types/Accounts';
 import { generateDepositDatFile } from '../utils/helpers';
 import { buildCreateDepositPayload } from './depositPayload';
+import {
+  requireNumber,
+  splitAccountsFile,
+  toNumber,
+  trimColumn,
+} from './parseUtils';
 import type { BankTypeHandler, UploadAccountsInput } from './types';
 
 const buildUploadAccountsPayload = ({
   fileContent,
   bankCode,
 }: UploadAccountsInput): UploadUserAccountPayload => {
-  const [agent, ...users] = fileContent.split('\n');
+  const { header: agent, rows } = splitAccountsFile(fileContent);
   const userList: UploadUserAccountPayload['users'] = [];
-  users.forEach((element) => {
+  rows.forEach((element) => {
     const [
       schemeId,
       accountNumber,
@@ -23,17 +27,21 @@ const buildUploadAccountsPayload = ({
       currentBalance,
       lastDepositDate,
     ] = element.split(',');
-    if (!accountNumber || !customerName) return; // skip invalid lines
+    if (!trimColumn(accountNumber) || !trimColumn(customerName)) return; // skip invalid lines
     userList.push({
-      schemeId,
-      accountNumber: Number(accountNumber),
-      customerName,
-      currentBalance: Number(currentBalance),
-      lastDepositDate,
+      schemeId: trimColumn(schemeId),
+      accountNumber: requireNumber(accountNumber, 'account number'),
+      customerName: trimColumn(customerName),
+      currentBalance: toNumber(currentBalance),
+      lastDepositDate: trimColumn(lastDepositDate),
     });
   });
   const [, agentCode] = agent.split(',');
-  return { agentCode: Number(agentCode), bankCode, users: userList };
+  return {
+    agentCode: requireNumber(agentCode, 'agent code'),
+    bankCode,
+    users: userList,
+  };
 };
 
 export const banksoftHandler: BankTypeHandler = {
@@ -45,12 +53,19 @@ export const banksoftHandler: BankTypeHandler = {
     );
     generateDepositDatFile(response);
   },
-  exportDeposit: async ({ depositId, agentCode, date, depositedAmount }) => {
-    const response = await exportDepositById(
+  exportDeposit: async ({
+    depositId,
+    agentCode,
+    date,
+    depositedAmount,
+    bankCode,
+  }) => {
+    const response = await exportDepositById<CreateDepositResponse>(
       depositId,
       agentCode,
       date,
       depositedAmount,
+      bankCode,
     );
     generateDepositDatFile(response);
   },

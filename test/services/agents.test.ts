@@ -28,20 +28,17 @@ import {
   createPeocitDeposit,
   deleteTransaction,
   exportDepositById,
-  exportPeocitDepositById,
   fetchAgentByCode,
   fetchAgents,
   fetchPastDeposits,
   fetchTransactions,
   updateAgent,
 } from '../../src/services/agents';
-import { useAuthStore } from '../../src/store/AuthStore';
 import { API_URLS } from '../../src/utils/constants';
 
 describe('agents service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useAuthStore.setState({ bankCode: 'BANK1', token: 'token' });
     apiMock.get.mockResolvedValue({ data: 'get-data' });
     apiMock.post.mockResolvedValue({ data: 'post-data' });
     apiMock.patch.mockResolvedValue({ data: 'patch-data' });
@@ -49,17 +46,17 @@ describe('agents service', () => {
   });
 
   it('calls agent read endpoints', async () => {
-    await expect(fetchAgents()).resolves.toBe('get-data');
+    await expect(fetchAgents('BANK1')).resolves.toBe('get-data');
     expect(apiMock.get).toHaveBeenLastCalledWith(
       `${API_URLS.AGENT}?bankCode=BANK1`,
     );
 
-    await expect(fetchAgentByCode('77')).resolves.toBe('get-data');
+    await expect(fetchAgentByCode('77', 'BANK1')).resolves.toBe('get-data');
     expect(apiMock.get).toHaveBeenLastCalledWith(
       `${API_URLS.AGENT}?agentCode=77&bankCode=BANK1`,
     );
 
-    await expect(fetchTransactions(77, '2026-04-27')).resolves.toBe(
+    await expect(fetchTransactions(77, '2026-04-27', 'BANK1')).resolves.toBe(
       'get-data',
     );
     expect(apiMock.get).toHaveBeenLastCalledWith(
@@ -86,15 +83,15 @@ describe('agents service', () => {
       limitAmount: 1000,
     };
 
-    await expect(createAgent(agent)).resolves.toBe('post-data');
+    await expect(createAgent(agent, 'BANK1')).resolves.toBe('post-data');
     expect(apiMock.post).toHaveBeenLastCalledWith(API_URLS.AGENT, {
       ...agent,
       bankCode: 'BANK1',
     });
 
-    await expect(updateAgent('77', { name: 'Updated' })).resolves.toBe(
-      'patch-data',
-    );
+    await expect(
+      updateAgent('77', { name: 'Updated' }, 'BANK1'),
+    ).resolves.toBe('patch-data');
     expect(apiMock.patch).toHaveBeenLastCalledWith(
       `${API_URLS.AGENT}?agentCode=77&bankCode=BANK1`,
       { name: 'Updated', bankCode: 'BANK1', agentCode: 77 },
@@ -134,18 +131,11 @@ describe('agents service', () => {
       `${API_URLS.PAST_DEPOSITS}?agentCode=77&bankCode=BANK1&from=2026-04-01&to=2026-04-02`,
     );
 
-    await expect(exportDepositById(5, 77, '2026-04-01', 900)).resolves.toBe(
-      'get-data',
-    );
-    expect(apiMock.get).toHaveBeenLastCalledWith(
-      `${API_URLS.EXPORT_DEPOSITE_BY_ID}?depositId=5&bankCode=BANK1&agentCode=77&date=2026-04-01&depositedAmount=900`,
-    );
-
     await expect(
-      exportPeocitDepositById(5, 77, '2026-04-01', 900),
+      exportDepositById(5, 77, '2026-04-01', 900, 'BANK1'),
     ).resolves.toBe('get-data');
     expect(apiMock.get).toHaveBeenLastCalledWith(
-      `${API_URLS.EXPORT_DEPOSITE_BY_ID}?depositId=5&bankCode=BANK1&agentCode=77&date=2026-04-01&depositedAmount=900`,
+      `${API_URLS.EXPORT_DEPOSIT_BY_ID}?depositId=5&bankCode=BANK1&agentCode=77&date=2026-04-01&depositedAmount=900`,
     );
   });
 });

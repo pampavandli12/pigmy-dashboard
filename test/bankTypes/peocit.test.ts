@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const serviceApi = vi.hoisted(() => ({
   uploadPeocitAccounts: vi.fn(),
   createPeocitDeposit: vi.fn(),
-  exportPeocitDepositById: vi.fn(),
+  exportDepositById: vi.fn(),
 }));
 const helperApi = vi.hoisted(() => ({
   generatePeocitDepositDatFile: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock('../../src/services/account', () => ({
 }));
 vi.mock('../../src/services/agents', () => ({
   createPeocitDeposit: serviceApi.createPeocitDeposit,
-  exportPeocitDepositById: serviceApi.exportPeocitDepositById,
+  exportDepositById: serviceApi.exportDepositById,
 }));
 vi.mock('../../src/utils/helpers', () => ({
   generatePeocitDepositDatFile: helperApi.generatePeocitDepositDatFile,
@@ -97,20 +97,22 @@ describe('peocitHandler', () => {
 
   it('exports a deposit through the peocit api and generates the file', async () => {
     const response = { agentCode: 1001, users: [] };
-    serviceApi.exportPeocitDepositById.mockResolvedValue(response);
+    serviceApi.exportDepositById.mockResolvedValue(response);
 
     await peocitHandler.exportDeposit({
       depositId: 5,
       agentCode: 1001,
       date: '2026-09-17',
       depositedAmount: 150,
+      bankCode: 'PEO123',
     });
 
-    expect(serviceApi.exportPeocitDepositById).toHaveBeenCalledWith(
+    expect(serviceApi.exportDepositById).toHaveBeenCalledWith(
       5,
       1001,
       '2026-09-17',
       150,
+      'PEO123',
     );
     expect(helperApi.generatePeocitDepositDatFile).toHaveBeenCalledWith(response);
   });

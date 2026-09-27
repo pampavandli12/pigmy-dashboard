@@ -3,6 +3,7 @@ import { fetchDashboard } from '../services/dashboard';
 import type { DashboardResponse } from '../types/Dashboard';
 import { Severity, Status } from '../types/sharedEnums';
 import { useAlertStore } from './AlertStore';
+import { useAuthStore } from './AuthStore';
 
 interface DashboardState {
   dashboardData: DashboardResponse | null;
@@ -20,7 +21,8 @@ export const useDashboardStore = create<DashboardState & Action>((set) => ({
     set({ dashboardLoadingStatus: Status.Loading });
 
     try {
-      const dashboardData = await fetchDashboard();
+      const bankCode = useAuthStore.getState().bankCode ?? '';
+      const dashboardData = await fetchDashboard(bankCode);
       set({ dashboardData, dashboardLoadingStatus: Status.Success });
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);

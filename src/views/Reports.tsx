@@ -3,7 +3,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { type SelectChangeEvent } from '@mui/material/Select';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Box, Paper, Popper, TextField } from '@mui/material';
+import { Box, Paper, Popper, TextField, Typography } from '@mui/material';
 import { useAuthStore } from '../store/AuthStore';
 import { CollectionStatus, SchemeType, Status } from '../types/sharedEnums';
 import Button from '@mui/material/Button';
@@ -13,7 +13,7 @@ import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import NoRowsOverlay from '../components/NoRowsOverlay';
-import type { ReportPayload, ReportReponse } from '../types/Report';
+import type { ReportPayload, ReportResponse } from '../types/Report';
 
 function Reports() {
   const [selectedBankCode, setSelectedBankCode] = React.useState<string>();
@@ -39,6 +39,9 @@ function Reports() {
   const fetchAgents = useReportStore((state) => state.fetchAgents);
   const fetchReportData = useReportStore((state) => state.fetchReportData);
   const reportData = useReportStore((state) => state.reportData);
+  const reportLoadingStatus = useReportStore(
+    (state) => state.reportLoadingStatus,
+  );
   const bankCode = selectedBankCode ?? currentBankCode ?? '';
 
   const branchOptions = useMemo(() => {
@@ -110,7 +113,7 @@ function Reports() {
     }
   }, [buildReportPayload, disabled, fetchReportData]);
 
-  const columns = useMemo<GridColDef<ReportReponse>[]>(
+  const columns = useMemo<GridColDef<ReportResponse>[]>(
     () => [
       { field: 'customerName', headerName: 'Customer Name', width: 200 },
       { field: 'collectedAmount', headerName: 'Collected Amount', width: 300 },
@@ -123,7 +126,7 @@ function Reports() {
   );
 
   const getRowId = useCallback(
-    (row: ReportReponse) =>
+    (row: ReportResponse) =>
       [
         row.accountNumber,
         row.collectedDate,
@@ -147,12 +150,14 @@ function Reports() {
 
   return (
     <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <h1>Reports</h1>
+      <Typography variant='h4' sx={{ fontWeight: 700 }}>
+        Reports
+      </Typography>
       <FormControl sx={{ m: 1, minWidth: 200 }} size='small'>
-        <InputLabel id='demo-simple-select-label'>Select Branches</InputLabel>
+        <InputLabel id='report-branch-label'>Select Branches</InputLabel>
         <Select
-          labelId='demo-simple-select-label'
-          id='demo-simple-select'
+          labelId='report-branch-label'
+          id='report-branch-select'
           value={bankCode}
           label='Select Branches'
           onChange={handleChange}
@@ -175,10 +180,10 @@ function Reports() {
       >
         {/* Agent Selection */}
         <FormControl sx={{ m: 1, minWidth: 200 }} size='small'>
-          <InputLabel id='demo-simple-select-label'>Select Agent</InputLabel>
+          <InputLabel id='report-agent-label'>Select Agent</InputLabel>
           <Select
-            labelId='demo-simple-select-label'
-            id='demo-simple-select'
+            labelId='report-agent-label'
+            id='report-agent-select'
             value={agentCode}
             label='Select Agent'
             onChange={handleAgentChange}
@@ -194,12 +199,12 @@ function Reports() {
         </FormControl>
         {/* Scheme Type Selection */}
         <FormControl sx={{ m: 1, minWidth: 200 }} size='small'>
-          <InputLabel id='demo-simple-select-label'>
+          <InputLabel id='report-scheme-label'>
             Select Scheme Type
           </InputLabel>
           <Select
-            labelId='demo-simple-select-label'
-            id='demo-simple-select'
+            labelId='report-scheme-label'
+            id='report-scheme-select'
             value={depositType}
             label='Select Scheme Type'
             onChange={(event) => setDepositType(event.target.value as string)}
@@ -214,12 +219,12 @@ function Reports() {
         </FormControl>
         {/* Collection Status Selection */}
         <FormControl sx={{ m: 1, minWidth: 200 }} size='small'>
-          <InputLabel id='demo-simple-select-label'>
+          <InputLabel id='report-collection-label'>
             Select Collection Type
           </InputLabel>
           <Select
-            labelId='demo-simple-select-label'
-            id='demo-simple-select'
+            labelId='report-collection-label'
+            id='report-collection-select'
             value={collectionStatus}
             label='Select Collection Type'
             onChange={(event) =>
@@ -285,7 +290,7 @@ function Reports() {
         <DataGrid
           rows={reportData}
           columns={columns}
-          loading={agentLoadingStatus === Status.Loading}
+          loading={reportLoadingStatus === Status.Loading}
           autoHeight
           autoPageSize
           getRowId={getRowId}

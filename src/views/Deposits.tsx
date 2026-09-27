@@ -6,8 +6,6 @@ import { useAgentStore } from '../store/AgentStore';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Status } from '../types/sharedEnums';
 import NoRowsOverlay from '../components/NoRowsOverlay';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type {
   Control,
@@ -45,7 +43,7 @@ const FilterBar = ({
       gap: 2,
       p: 2,
       mb: 2,
-      backgroundColor: '#f5f5f5',
+      backgroundColor: 'background.default',
       borderRadius: 1,
       alignItems: 'start',
     }}
@@ -104,6 +102,15 @@ const FilterBar = ({
   </Box>
 );
 
+const NoDepositsOverlay = () => (
+  <NoRowsOverlay message='No deposits found for selected date' />
+);
+
+const gridSlots = {
+  noRowsOverlay: NoDepositsOverlay,
+  noResultsOverlay: NoDepositsOverlay,
+};
+
 function Deposits() {
   const [isDepositModalOpen, setDepositModalOpen] = useState(false);
   const params = useParams();
@@ -141,58 +148,61 @@ function Deposits() {
       fetchAgents();
     }
   }, [fetchAgentsLoadingStatus, fetchAgents]);
-  const columns: GridColDef[] = [
-    {
-      field: 'depositId',
-      headerName: 'Deposit ID',
-      type: 'number',
-      width: 150,
-    },
-    {
-      field: 'agentName',
-      headerName: 'Agent Name',
-      type: 'string',
-      flex: 1,
-      minWidth: 150,
-    },
-    {
-      field: 'totalDepositedAmount',
-      headerName: 'Total Deposited Amount',
-      type: 'number',
-      width: 150,
-    },
-    {
-      field: 'depositDate',
-      headerName: 'Deposit Date',
-      type: 'date',
-      width: 150,
-      valueFormatter: (params) => {
-        const date = new Date(params);
-        return date.toLocaleDateString();
+  const columns = useMemo<GridColDef[]>(
+    () => [
+      {
+        field: 'depositId',
+        headerName: 'Deposit ID',
+        type: 'number',
+        width: 150,
       },
-    },
-    {
-      field: 'export',
-      headerName: 'Export',
-      width: 150,
-      renderCell: (params) => (
-        <Button
-          variant='contained'
-          color='primary'
-          onClick={() => {
-            exportDepositeById(
-              params.row.depositId,
-              Number(params.row.agentCode),
-              params.row.depositDate,
-              params.row.totalDepositedAmount,
-            );
-          }}
-        >
-          Export
-        </Button>
-      ),
-    },
-  ];
+      {
+        field: 'agentName',
+        headerName: 'Agent Name',
+        type: 'string',
+        flex: 1,
+        minWidth: 150,
+      },
+      {
+        field: 'totalDepositedAmount',
+        headerName: 'Total Deposited Amount',
+        type: 'number',
+        width: 150,
+      },
+      {
+        field: 'depositDate',
+        headerName: 'Deposit Date',
+        type: 'date',
+        width: 150,
+        valueFormatter: (params) => {
+          const date = new Date(params);
+          return date.toLocaleDateString();
+        },
+      },
+      {
+        field: 'export',
+        headerName: 'Export',
+        width: 150,
+        renderCell: (params) => (
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={() => {
+              exportDepositeById(
+                params.row.depositId,
+                Number(params.row.agentCode),
+                params.row.depositDate,
+                params.row.totalDepositedAmount,
+              );
+            }}
+          >
+            Export
+          </Button>
+        ),
+      },
+    ],
+    [exportDepositeById],
+  );
 
   const isPastDepositsLoading = useMemo(
     () => fetchPastDepositsLoadingStatus === Status.Loading,
@@ -209,69 +219,57 @@ function Deposits() {
   }, [pastDeposits, agents, params.agentCode]);
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <Box sx={{ width: '100%' }}>
+      {isDepositModalOpen && (
+        <CreateDepositModal
+          agentCode={params.agentCode as string}
+          isOpen={isDepositModalOpen}
+          onClose={() => setDepositModalOpen(false)}
+        />
+      )}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant='h4' sx={{ fontWeight: 700, mb: 0.5 }}>
+          Deposits
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: '14px' }}>
+          Create and manage deposits for your agents.
+        </Typography>
+      </Box>
       <Box sx={{ width: '100%' }}>
-        {isDepositModalOpen && (
-          <CreateDepositModal
-            agentCode={params.agentCode as string}
-            isOpen={isDepositModalOpen}
-            onClose={() => setDepositModalOpen(false)}
-          />
-        )}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant='h4' sx={{ fontWeight: 700, mb: 0.5 }}>
-            Deposits
-          </Typography>
-          <Typography sx={{ color: '#999999', fontSize: '14px' }}>
-            Create and manage deposits for your agents.
-          </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'end', mb: 2 }}>
+          <Button variant='contained' onClick={() => setDepositModalOpen(true)}>
+            Create Deposit
+          </Button>
         </Box>
+        <FilterBar
+          control={control}
+          handleSubmit={handleSubmit}
+          onFilterSubmit={onFilterSubmit}
+          errors={errors}
+        />
         <Box sx={{ width: '100%' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'end', mb: 2 }}>
-            <Button
-              variant='contained'
-              onClick={() => setDepositModalOpen(true)}
-            >
-              Create Deposit
-            </Button>
-          </Box>
-          <FilterBar
-            control={control}
-            handleSubmit={handleSubmit}
-            onFilterSubmit={onFilterSubmit}
-            errors={errors}
-          />
-          <Box sx={{ width: '100%' }}>
-            <DataGrid
-              autoHeight
-              rows={rowData}
-              columns={columns}
-              loading={isPastDepositsLoading}
-              getRowId={(row) => row.depositId}
-              slots={{
-                noRowsOverlay: () => (
-                  <NoRowsOverlay message='No deposits found for selected date' />
-                ),
-                noResultsOverlay: () => (
-                  <NoRowsOverlay message='No deposits found for selected date' />
-                ),
-              }}
-              showToolbar
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 5,
-                  },
+          <DataGrid
+            autoHeight
+            rows={rowData}
+            columns={columns}
+            loading={isPastDepositsLoading}
+            getRowId={(row) => row.depositId}
+            slots={gridSlots}
+            showToolbar
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 5,
                 },
-              }}
-              pageSizeOptions={[5]}
-              checkboxSelection={false}
-              disableRowSelectionOnClick
-            />
-          </Box>
+              },
+            }}
+            pageSizeOptions={[5]}
+            checkboxSelection={false}
+            disableRowSelectionOnClick
+          />
         </Box>
       </Box>
-    </LocalizationProvider>
+    </Box>
   );
 }
 

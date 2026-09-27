@@ -1,4 +1,4 @@
-export interface ReportReponse {
+export interface ReportResponse {
   accountNumber: number;
   customerName: string;
   collectedAmount: number;
@@ -9,11 +9,10 @@ export interface ReportReponse {
 }
 export interface ReportPayload {
   bankCode: string;
+  // 'ALL' sentinel or a specific enum value.
   from: string;
   to: string;
   agent: string;
   schemeType: string;
   collectionStatus: string;
 }
-
-//http://localhost:1002/pigmy/v1/transaction/search?bankCode=AGT123&from=2026-06-19&to=2026-06-21&agent=ALL&schemeType=Pigmy

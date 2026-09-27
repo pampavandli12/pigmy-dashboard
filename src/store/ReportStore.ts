@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import type { ReportPayload, ReportReponse } from '../types/Report';
+import type { ReportPayload, ReportResponse } from '../types/Report';
 import { Severity, Status, type AgentsResponse } from '../types/sharedEnums';
-import { fetchAgents, fetchReportData } from '../services/Report';
+import { fetchReportData } from '../services/Report';
+import { fetchAgents } from '../services/agents';
 import { useAlertStore } from './AlertStore';
 
 interface ReportState {
-  reportData: ReportReponse[];
+  reportData: ReportResponse[];
   reportLoadingStatus: Status;
   agentLoadingStatus: Status;
   agents: AgentsResponse;
@@ -46,7 +47,6 @@ export const useReportStore = create<ReportState & Action>((set) => ({
     try {
       const response = await fetchReportData(payload);
 
-      console.log('Response:', response);
       set({ reportData: response, reportLoadingStatus: Status.Success });
       const alertStore = useAlertStore.getState();
       alertStore.showAlert(

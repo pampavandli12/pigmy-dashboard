@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Severity, Status } from '../../src/types/sharedEnums';
 
 const reportApi = vi.hoisted(() => ({
-  fetchAgents: vi.fn(),
   fetchReportData: vi.fn(),
+}));
+const agentsApi = vi.hoisted(() => ({
+  fetchAgents: vi.fn(),
 }));
 
 vi.mock('../../src/services/Report', () => reportApi);
+vi.mock('../../src/services/agents', () => agentsApi);
 
 import { useAlertStore } from '../../src/store/AlertStore';
 import { useReportStore } from '../../src/store/ReportStore';
@@ -38,7 +41,7 @@ describe('ReportStore', () => {
   });
 
   it('loads agents and reports successfully', async () => {
-    reportApi.fetchAgents.mockResolvedValue([
+    agentsApi.fetchAgents.mockResolvedValue([
       {
         id: 1,
         name: 'Agent One',
@@ -78,7 +81,7 @@ describe('ReportStore', () => {
   });
 
   it('handles agent and report fetch failures', async () => {
-    reportApi.fetchAgents.mockRejectedValue(new Error('agents failed'));
+    agentsApi.fetchAgents.mockRejectedValue(new Error('agents failed'));
     reportApi.fetchReportData.mockRejectedValue(new Error('reports failed'));
 
     await useReportStore.getState().fetchAgents('BANK1');

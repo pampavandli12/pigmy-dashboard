@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run test:run && tsc -b && vite build",
-    "lint": "eslint src test --ext ts,tsx",
+    "lint": "eslint src test",
+    "typecheck": "tsc -b",
     "test": "vitest",
     "test:run": "vitest --run",
     "preview": "vite preview",
@@ -35,7 +36,6 @@
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.71.2",
-    "react-router": "^7.9.6",
     "react-router-dom": "^7.13.1",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6",

@@ -1,17 +1,12 @@
-import { Box, Typography, Button, Card, Avatar, IconButton } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import SwapCallsIcon from '@mui/icons-material/SwapCalls';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import LockResetIcon from '@mui/icons-material/LockReset';
-import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAgentStore } from '../store/AgentStore';
 import LoadingComponent from '../components/LoadingComponent';
 import { Status, type Agent } from '../types/sharedEnums';
 import AlertDialog from '../components/AlertDialog';
+import AgentCard from '../components/AgentCard';
 
 function Agents() {
   const navigate = useNavigate();
@@ -21,7 +16,7 @@ function Agents() {
     (state) => state.fetchAgentLoadingStatus,
   );
   const resetDevice = useAgentStore((state) => state.resetDevice);
-  const resetDeviceStatus = useAgentStore((state) => state.ResetDeviceStatus);
+  const resetDeviceStatus = useAgentStore((state) => state.resetDeviceStatus);
   const [openDeregisterModal, setOpenDeregisterModal] = useState(false);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<number>>(
     () => new Set(),
@@ -33,46 +28,47 @@ function Agents() {
   useEffect(() => {
     fetchAgents();
   }, [fetchAgents]);
-  const agentInitial = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return parts[0].charAt(0).toUpperCase() + parts[1].charAt(0).toUpperCase();
-  };
+
   const addAgent = () => {
-    // Logic to navigate to Add Agent page
     navigate('/agents/addAgent');
   };
-  const getStatusColor = (status: string) => {
-    if (status === 'active') return '#ff6b6b';
-    if (status === 'inactive') return '#ff6b6b';
-    return '#666666';
-  };
-  const handleEditAgent = async (agentCode: number) => {
-    navigate(`/agents/editAgent/${agentCode}`);
-  };
-  const handleDeviceReset = async (phoneNumber: string) => {
-    await resetDevice(phoneNumber);
-  };
-  const loadTransactions = (agentCode: number) => {
-    navigate(`/agents/transactions/${agentCode}`);
-  };
-  const togglePasswordVisibility = (agentCode: number) => {
+  // Stable callbacks so the memoized AgentCard only re-renders when its own props change.
+  const handleEditAgent = useCallback(
+    (agentCode: number) => navigate(`/agents/editAgent/${agentCode}`),
+    [navigate],
+  );
+  const handleDeviceReset = useCallback(
+    (phoneNumber: string) => resetDevice(phoneNumber),
+    [resetDevice],
+  );
+  const loadTransactions = useCallback(
+    (agentCode: number) => navigate(`/agents/transactions/${agentCode}`),
+    [navigate],
+  );
+  const loadDeposits = useCallback(
+    (agentCode: number) => navigate(`/agents/deposits/${agentCode}`),
+    [navigate],
+  );
+  const togglePasswordVisibility = useCallback((agentCode: number) => {
     setVisiblePasswords((current) => {
       const next = new Set(current);
       if (next.has(agentCode)) next.delete(agentCode);
       else next.add(agentCode);
       return next;
     });
-  };
+  }, []);
+  const deregisterAgent = useCallback(
+    (agent: Agent) => {
+      setOpenDeregisterModal(true);
+      setSelectedAgent(agent);
+    },
+    [setSelectedAgent],
+  );
 
   // Show loading state while fetching agents
   if (fetchAgentLoadingStatus === Status.Loading) {
     return <LoadingComponent />;
   }
-  const deregisterAgent = (agent: Agent) => {
-    setOpenDeregisterModal(true);
-    setSelectedAgent(agent);
-  };
   const handleAgentDeregister = async (isDeregister: boolean) => {
     if (!isDeregister || !selectedAgent) return;
     // call update agent api with block status as yes
@@ -109,7 +105,7 @@ function Agents() {
           <Typography variant='h4' sx={{ fontWeight: 700, mb: 0.5 }}>
             Agent List
           </Typography>
-          <Typography sx={{ color: '#999999', fontSize: '14px' }}>
+          <Typography sx={{ color: 'text.secondary', fontSize: '14px' }}>
             Monitor and manage your agents.
           </Typography>
         </Box>
@@ -148,267 +144,19 @@ function Agents() {
           gap: 3,
         }}
       >
-        {agents.map((agent, index) => (
-          <Card
-            key={index}
-            elevation={1}
-            sx={{
-              borderRadius: '12px',
-              padding: 2.5,
-            }}
-          >
-            {/* Card Header */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                mb: 2,
-              }}
-            >
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                <Avatar
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    backgroundColor: '#B3D9F2',
-                    color: '#333333',
-                    fontWeight: 700,
-                    fontSize: '20px',
-                  }}
-                >
-                  {agentInitial(agent.name)}
-                </Avatar>
-                <Box sx={{ flex: 'auto' }}>
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      color: '#1a1a1a',
-                      fontSize: '15px',
-                    }}
-                  >
-                    {agent.name}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: '#1976d2',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    AGENT NO: {agent.agentCode}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: '#999999',
-                      fontSize: '12px',
-                      mt: 0.5,
-                    }}
-                  >
-                    {agent.address}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                    <Typography
-                      variant='overline'
-                      sx={{
-                        background: '#e6d6d6',
-                        padding: '.25rem',
-                        color: 'darkmagenta',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {agent.password
-                        ? visiblePasswords.has(agent.agentCode)
-                          ? agent.password
-                          : '••••••'
-                        : 'Unavailable'}
-                    </Typography>
-                    {agent.password && (
-                      <IconButton
-                        size='small'
-                        aria-label={`${
-                          visiblePasswords.has(agent.agentCode) ? 'Hide' : 'Show'
-                        } password for ${agent.name}`}
-                        onClick={() => togglePasswordVisibility(agent.agentCode)}
-                      >
-                        {visiblePasswords.has(agent.agentCode) ? (
-                          <VisibilityOffIcon fontSize='small' />
-                        ) : (
-                          <VisibilityIcon fontSize='small' />
-                        )}
-                      </IconButton>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Status Row */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: 2,
-                mb: 2.5,
-                pb: 2.5,
-                borderBottom: '1px solid #f0f0f0',
-              }}
-            >
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '11px',
-                    color: '#999999',
-                    fontWeight: 500,
-                    mb: 0.5,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Mobile Status
-                </Typography>
-                <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>
-                  Registered
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '11px',
-                    color: '#999999',
-                    fontWeight: 500,
-                    mb: 0.5,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Block Status
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: getStatusColor(agent.status),
-                  }}
-                >
-                  {agent.status.toUpperCase()}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '11px',
-                    color: '#999999',
-                    fontWeight: 500,
-                    mb: 0.5,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Agent Limit
-                </Typography>
-                <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>
-                  {agent.limitAmount}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Action Buttons */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 1.5,
-              }}
-            >
-              <Button
-                variant='text'
-                startIcon={<SwapCallsIcon />}
-                onClick={() => loadTransactions(agent.agentCode)}
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#1976d2',
-                  textTransform: 'none',
-                  justifyContent: 'flex-start',
-                  '&:hover': {
-                    backgroundColor: 'rgba(25, 118, 210, 0.05)',
-                  },
-                }}
-              >
-                Transactions
-              </Button>
-              <Button
-                variant='text'
-                onClick={() => navigate(`/agents/deposits/${agent.agentCode}`)}
-                startIcon={<AttachMoneyIcon />}
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#333333',
-                  textTransform: 'none',
-                  justifyContent: 'flex-start',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                  },
-                }}
-              >
-                Deposits
-              </Button>
-              <Button
-                variant='text'
-                startIcon={<LockResetIcon />}
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#333333',
-                  textTransform: 'none',
-                  justifyContent: 'flex-start',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                  },
-                }}
-              >
-                Reset PIN
-              </Button>
-              <Button
-                variant='text'
-                startIcon={<DeleteIcon />}
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#ff6b6b',
-                  textTransform: 'none',
-                  justifyContent: 'flex-start',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 107, 107, 0.05)',
-                  },
-                }}
-                onClick={() => deregisterAgent(agent)}
-              >
-                Deregister
-              </Button>
-            </Box>
-            <Box
-              sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}
-            >
-              <Button
-                variant='outlined'
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={() => handleEditAgent(agent.agentCode)}
-              >
-                Edit Agent
-              </Button>
-              <Button
-                variant='outlined'
-                color='error'
-                loading={resetDeviceStatus == Status.Loading}
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={() => handleDeviceReset(agent.phone)}
-              >
-                Reset Device
-              </Button>
-            </Box>
-          </Card>
+        {agents.map((agent) => (
+          <AgentCard
+            key={agent.agentCode}
+            agent={agent}
+            isPasswordVisible={visiblePasswords.has(agent.agentCode)}
+            isResettingDevice={resetDeviceStatus === Status.Loading}
+            onTogglePassword={togglePasswordVisibility}
+            onTransactions={loadTransactions}
+            onDeposits={loadDeposits}
+            onEdit={handleEditAgent}
+            onResetDevice={handleDeviceReset}
+            onDeregister={deregisterAgent}
+          />
         ))}
       </Box>
     </Box>

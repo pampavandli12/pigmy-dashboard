@@ -8,8 +8,6 @@ import {
   type GridColDef,
 } from '@mui/x-data-grid';
 import type { Dayjs } from 'dayjs';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import AlertDialog from '../components/AlertDialog';
 import { useAgentStore } from '../store/AgentStore';
@@ -23,6 +21,77 @@ type TransactionRow = {
   customerName: string;
   status: keyof typeof TransactionStatus;
   collectedAmount: number;
+};
+
+type TransactionsToolbarProps = {
+  selectedDate: Dayjs | null;
+  onDateChange: (date: Dayjs | null) => void;
+};
+
+// Typed so the props passed via `slotProps.toolbar` are checked.
+declare module '@mui/x-data-grid' {
+  interface ToolbarPropsOverrides {
+    selectedDate: Dayjs | null;
+    onDateChange: (date: Dayjs | null) => void;
+  }
+}
+
+// Defined at module scope so the toolbar keeps a stable component identity and
+// is not remounted (losing quick-filter focus) on every parent re-render.
+function TransactionsToolbar({
+  selectedDate,
+  onDateChange,
+}: TransactionsToolbarProps) {
+  return (
+    <Toolbar>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 2,
+          p: 2,
+          flexWrap: 'wrap',
+          width: '100%',
+          alignItems: 'center',
+        }}
+      >
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <GridToolbarFilterButton />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            marginLeft: 'auto',
+          }}
+        >
+          <GridToolbarQuickFilter />
+          <DatePicker
+            label='Filter by date'
+            value={selectedDate}
+            onChange={onDateChange}
+            slotProps={{
+              textField: {
+                size: 'small',
+              },
+            }}
+          />
+        </Box>
+      </Box>
+    </Toolbar>
+  );
+}
+
+const NoTransactionsOverlay = () => (
+  <NoRowsOverlay message='No transactions found for selected date' />
+);
+
+const gridSlots = {
+  toolbar: TransactionsToolbar,
+  noRowsOverlay: NoTransactionsOverlay,
+  noResultsOverlay: NoTransactionsOverlay,
 };
 
 function Transactions() {
@@ -146,97 +215,52 @@ function Transactions() {
     [handleVoidClick],
   );
 
-  const TransactionsToolbar = () => (
-    <Toolbar>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 2,
-          p: 2,
-          flexWrap: 'wrap',
-          width: '100%',
-          alignItems: 'center',
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <GridToolbarFilterButton />
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            marginLeft: 'auto',
-          }}
-        >
-          <GridToolbarQuickFilter />
-          <DatePicker
-            label='Filter by date'
-            value={selectedDate}
-            onChange={setSelectedDate}
-            slotProps={{
-              textField: {
-                size: 'small',
-              },
-            }}
-          />
-        </Box>
-      </Box>
-    </Toolbar>
-  );
-
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ width: '100%' }}>
-        <AlertDialog
-          open={openVoidModal}
-          handleClose={handleCloseVoidModal}
-          handleConfirm={handleConfirmVoid}
-          title='Void transaction?'
-          description='This action will permanently void the selected transaction. Do you want to continue?'
-        />
-        <Box sx={{ mb: 3 }}>
-          <Typography variant='h4' sx={{ fontWeight: 700, mb: 0.5 }}>
-            Transactions List
-          </Typography>
-          <Typography sx={{ color: '#999999', fontSize: '14px' }}>
-            Monitor and manage user transactions.
-          </Typography>
-        </Box>
-
-        <Box sx={{ width: '100%' }}>
-          <DataGrid
-            autoHeight
-            rows={transactions as unknown as TransactionRow[]}
-            columns={columns}
-            loading={isTransactionLoading || isVoidingTransaction}
-            getRowId={(row) => row.trasactionId}
-            slots={{
-              noRowsOverlay: () => (
-                <NoRowsOverlay message='No tracsactions found for selected date' />
-              ),
-              noResultsOverlay: () => (
-                <NoRowsOverlay message='No tracsactions found for selected date' />
-              ),
-              toolbar: TransactionsToolbar,
-            }}
-            showToolbar
-            initialState={{
-              pagination: {
-                paginationModel: {
-                  pageSize: 5,
-                },
-              },
-            }}
-            pageSizeOptions={[5]}
-            checkboxSelection={false}
-            disableRowSelectionOnClick
-          />
-        </Box>
+    <Box sx={{ width: '100%' }}>
+      <AlertDialog
+        open={openVoidModal}
+        handleClose={handleCloseVoidModal}
+        handleConfirm={handleConfirmVoid}
+        title='Void transaction?'
+        description='This action will permanently void the selected transaction. Do you want to continue?'
+      />
+      <Box sx={{ mb: 3 }}>
+        <Typography variant='h4' sx={{ fontWeight: 700, mb: 0.5 }}>
+          Transactions List
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: '14px' }}>
+          Monitor and manage user transactions.
+        </Typography>
       </Box>
-    </LocalizationProvider>
+
+      <Box sx={{ width: '100%' }}>
+        <DataGrid
+          autoHeight
+          rows={transactions as unknown as TransactionRow[]}
+          columns={columns}
+          loading={isTransactionLoading || isVoidingTransaction}
+          getRowId={(row) => row.trasactionId}
+          slots={gridSlots}
+          slotProps={{
+            toolbar: {
+              selectedDate,
+              onDateChange: setSelectedDate,
+            },
+          }}
+          showToolbar
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 5,
+              },
+            },
+          }}
+          pageSizeOptions={[5]}
+          checkboxSelection={false}
+          disableRowSelectionOnClick
+        />
+      </Box>
+    </Box>
   );
 }
 

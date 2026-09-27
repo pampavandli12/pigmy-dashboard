@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -16,8 +16,18 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2022,
       globals: globals.browser,
+    },
+  },
+  {
+    // Test files and Node-run config also need Node + Vitest globals.
+    files: ['test/**/*.{ts,tsx}', '**/*.config.{ts,js}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.vitest,
+      },
     },
   },
 ])

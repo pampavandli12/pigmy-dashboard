@@ -1,37 +1,26 @@
-import type { CreateDepositResponse } from '../types/Agent';
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export type AppConfig = {
   apiDomain: string;
   apiTimeout: number;
-  logLevel: 'debug' | 'info' | 'warn' | 'error';
+  logLevel: LogLevel;
 };
 
-type Environment = 'development' | 'staging' | 'production';
+// Fallbacks used when an env var is not set. VITE_* values (see .env.* files and
+// the deploy platform) take precedence, so the API domain is configurable per build.
+const DEFAULT_API_DOMAIN = 'https://pigmyapp-jomt.onrender.com';
+const DEFAULT_API_TIMEOUT = import.meta.env.PROD ? 10000 : 30000;
+const DEFAULT_LOG_LEVEL: LogLevel = import.meta.env.PROD ? 'error' : 'debug';
 
-const getConfig = (env: Environment): AppConfig => {
-  const configs: Record<Environment, AppConfig> = {
-    development: {
-      apiDomain: 'https://pigmyapp-jomt.onrender.com',
-      //apiDomain: 'http://localhost:8080',
-      apiTimeout: 30000,
-      logLevel: 'debug',
-    },
-    staging: {
-      apiDomain: 'https://api-staging.example.com',
-      apiTimeout: 30000,
-      logLevel: 'info',
-    },
-    production: {
-      apiDomain: 'https://api.example.com',
-      apiTimeout: 10000,
-      logLevel: 'error',
-    },
-  };
+const parsedTimeout = Number(import.meta.env.VITE_API_TIMEOUT);
 
-  return configs[env];
+export const appConfig: AppConfig = {
+  apiDomain: import.meta.env.VITE_API_DOMAIN || DEFAULT_API_DOMAIN,
+  apiTimeout: Number.isFinite(parsedTimeout) && parsedTimeout > 0
+    ? parsedTimeout
+    : DEFAULT_API_TIMEOUT,
+  logLevel: import.meta.env.VITE_LOG_LEVEL ?? DEFAULT_LOG_LEVEL,
 };
-
-export const appConfig = getConfig('development');
 
 export const API_URLS = {
   LOGIN: '/pigmy/v1/login',
@@ -47,32 +36,10 @@ export const API_URLS = {
     peocit: '/pigmy/v1/agent/deposit/multipleDate/peocit',
   },
   PAST_DEPOSITS: '/pigmy/v1/agent/pastDeposits',
-  EXPORT_DEPOSITE_BY_ID: 'pigmy/v1/agent/export',
+  EXPORT_DEPOSIT_BY_ID: '/pigmy/v1/agent/export',
   UPDATE_PHONE: '/pigmy/v1/user/upload/mobilenumbers',
-  UPDATE_PHONY_BY_ACCOUNT: '/pigmy/v1/user/updateMobileNumber',
+  UPDATE_PHONE_BY_ACCOUNT: '/pigmy/v1/user/updateMobileNumber',
   REPORT: '/pigmy/v1/transaction/search',
-  RESET_DEVICE: 'pigmy/v1/agent/revoke',
+  RESET_DEVICE: '/pigmy/v1/agent/revoke',
   DASHBOARD: '/pigmy/v1/dashboard',
-};
-export const MOCK_DEPOSIT_RESPONSE: CreateDepositResponse = {
-  agentCode: 1,
-  bankCode: 'AGT123',
-  totalDepositedAmount: 2000,
-  depositedDate: '12.04.26',
-  users: [
-    {
-      schemeId: '012d',
-      accountNumber: 3,
-      collectedAmount: 500,
-      customerName: 'Rahul Mehta',
-      collectedDate: '12.04.26',
-    },
-    {
-      schemeId: '017d',
-      accountNumber: 3,
-      collectedAmount: 1500,
-      customerName: 'Rahul Mehta',
-      collectedDate: '12.04.26',
-    },
-  ],
 };

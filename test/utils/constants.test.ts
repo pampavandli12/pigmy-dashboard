@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  API_URLS,
-  MOCK_DEPOSIT_RESPONSE,
-  appConfig,
-} from '../../src/utils/constants';
+import { API_URLS, appConfig } from '../../src/utils/constants';
 
 describe('constants', () => {
   it('exports app config and API paths', () => {
@@ -18,6 +14,5 @@ describe('constants', () => {
       UPLOAD_ACCOUNTS: { banksoft: '/pigmy/v1/user' },
       CREATE_DEPOSIT: { banksoft: '/pigmy/v1/agent/deposit/multipleDate' },
     });
-    expect(MOCK_DEPOSIT_RESPONSE.users).toHaveLength(2);
   });
 });

@@ -20,7 +20,7 @@ export type LoginResponse = {
 };
 export const Status = {
   Idle: 'Idle',
-  Loading: 'Loafing',
+  Loading: 'Loading',
   Success: 'Success',
   Error: 'Error',
 } as const;
@@ -61,8 +61,11 @@ export const CollectionStatus = {
   Deposited: 'Deposited',
   Collected: 'Collected',
 } as const;
+export type CollectionStatus =
+  (typeof CollectionStatus)[keyof typeof CollectionStatus];
 
 export const SchemeType = {
   PigmyDeposit: 'Pigmy Deposit',
   DailyDeposit: 'Daily Deposit',
 } as const;
+export type SchemeType = (typeof SchemeType)[keyof typeof SchemeType];

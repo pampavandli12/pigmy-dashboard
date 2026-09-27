@@ -91,6 +91,7 @@ describe('banksoftHandler', () => {
       agentCode: 77,
       date: '2026-04-02',
       depositedAmount: 900,
+      bankCode: 'BANK1',
     });
 
     expect(serviceApi.exportDepositById).toHaveBeenCalledWith(
@@ -98,6 +99,7 @@ describe('banksoftHandler', () => {
       77,
       '2026-04-02',
       900,
+      'BANK1',
     );
     expect(helperApi.generateDepositDatFile).toHaveBeenCalledWith(response);
   });

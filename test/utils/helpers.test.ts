@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as XLSX from 'xlsx';
-import { MOCK_DEPOSIT_RESPONSE } from '../../src/utils/constants';
+import { MOCK_DEPOSIT_RESPONSE } from '../fixtures/deposits';
 import {
   generateDepositDatFile,
   generatePeocitDepositDatFile,

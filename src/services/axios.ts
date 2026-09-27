@@ -1,22 +1,30 @@
 import axios from "axios";
 import { API_URLS, appConfig } from "../utils/constants";
 import { useAuthStore } from "../store/AuthStore";
+import { logger } from "../utils/logger";
+
+// Auth failures that mean the session is no longer valid and the user must re-login.
+const AUTH_FAILURE_STATUSES = [401, 403];
 
 export const api = axios.create({
   baseURL: appConfig.apiDomain,
+  timeout: appConfig.apiTimeout,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptor for adding auth token and logging requests/responses
+// Request interceptor: inject the auth token and the per-request bank type.
 api.interceptors.request.use(
   (config) => {
-    const { token, bankType } = useAuthStore.getState(); // Get auth details from Zustand store
+    const { token, bankType } = useAuthStore.getState();
 
-    console.debug("API Request:", config);
-    config.headers["Content-Type"] = "application/json";
-    config.headers["Authorization"] = `${token || ""}`;
+    // Log the method/url only — never the full config, which contains the token.
+    logger.debug("API Request:", config.method?.toUpperCase(), config.url);
+
+    if (token) {
+      config.headers["Authorization"] = token;
+    }
     // Every API except login is scoped to a bank type; the backend uses this header
     // to select the correct bank-specific behaviour.
     if (config.url !== API_URLS.LOGIN) {
@@ -25,22 +33,22 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error("API Request Error:", error);
+    logger.error("API Request Error:", error);
     return Promise.reject(error);
   },
 );
 
-// Interceptor for redirecting on 401 and logging responses/errors
+// Response interceptor: on an auth failure, clear state and redirect to sign-in.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const logout = useAuthStore.getState().logout; // Get logout function from Zustand store
-    if (error.response && error.response.status === 403) {
-      console.warn("Unauthorized! Redirecting to login.");
-      logout(); // Clear auth state
+    const status = error.response?.status;
+    if (status && AUTH_FAILURE_STATUSES.includes(status)) {
+      logger.warn("Session expired or unauthorized. Redirecting to sign-in.");
+      useAuthStore.getState().logout();
       window.location.href = "/signin";
     }
-    console.error("API Error:", error);
+    logger.error("API Error:", error);
     return Promise.reject(error);
   },
 );

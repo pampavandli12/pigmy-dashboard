@@ -24,7 +24,6 @@ const agentApi = vi.hoisted(() => ({
   createBanksoftDeposit: vi.fn(),
   createPeocitDeposit: vi.fn(),
   exportDepositById: vi.fn(),
-  exportPeocitDepositById: vi.fn(),
   fetchPastDeposits: vi.fn(),
   deviceReset: vi.fn(),
 }));
@@ -214,7 +213,7 @@ describe('AgentStore', () => {
       users: [],
     };
     agentApi.createPeocitDeposit.mockResolvedValue(peocitResponse);
-    agentApi.exportPeocitDepositById.mockResolvedValue(peocitResponse);
+    agentApi.exportDepositById.mockResolvedValue(peocitResponse);
 
     await useAgentStore.getState().createDeposit(
       {
@@ -230,16 +229,17 @@ describe('AgentStore', () => {
     await useAgentStore.getState().exportDepositeById(5, 77, '2026-09-17', 150);
 
     expect(agentApi.createPeocitDeposit).toHaveBeenCalledTimes(1);
-    expect(agentApi.exportPeocitDepositById).toHaveBeenCalledWith(
+    // Both bank types share the export endpoint; the peocit bankCode is forwarded.
+    expect(agentApi.exportDepositById).toHaveBeenCalledWith(
       5,
       77,
       '2026-09-17',
       150,
+      'PEO123',
     );
     expect(helperApi.generatePeocitDepositDatFile).toHaveBeenCalledTimes(2);
     // Banksoft paths stay untouched — bank logic is isolated by bankType.
     expect(agentApi.createBanksoftDeposit).not.toHaveBeenCalled();
-    expect(agentApi.exportDepositById).not.toHaveBeenCalled();
     expect(helperApi.generateDepositDatFile).not.toHaveBeenCalled();
     expect(useAgentStore.getState()).toMatchObject({
       createDepositLoadingStatus: Status.Success,

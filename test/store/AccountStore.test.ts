@@ -20,7 +20,7 @@ const agentApi = vi.hoisted(() => ({
 const accountApi = vi.hoisted(() => ({
   fetchUserAccounts: vi.fn(),
   updateUserAccounts: vi.fn(),
-  UpdateUserPhoneNumber: vi.fn(),
+  updateUserPhoneNumber: vi.fn(),
   uploadBanksoftAccounts: vi.fn(),
 }));
 
@@ -143,17 +143,17 @@ describe('AccountStore', () => {
   });
 
   it('updates a single user phone number with success and error statuses', async () => {
-    accountApi.UpdateUserPhoneNumber.mockResolvedValue({});
+    accountApi.updateUserPhoneNumber.mockResolvedValue({});
     accountApi.fetchUserAccounts.mockResolvedValue([]);
 
     await useAccountStore.getState().updateUserPhoneNumber('9876543210', 7);
 
-    expect(accountApi.UpdateUserPhoneNumber).toHaveBeenCalledWith(
+    expect(accountApi.updateUserPhoneNumber).toHaveBeenCalledWith(
       '9876543210',
       7,
     );
     expect(accountApi.fetchUserAccounts).toHaveBeenCalled();
-    expect(useAccountStore.getState().userAccountsLoadingStatus).toBe(
+    expect(useAccountStore.getState().userPhoneNumberUpdateStatus).toBe(
       Status.Success,
     );
     expect(useAlertStore.getState().alert).toMatchObject({
@@ -162,11 +162,11 @@ describe('AccountStore', () => {
       severity: 'success',
     });
 
-    accountApi.UpdateUserPhoneNumber.mockRejectedValue(new Error('patch failed'));
+    accountApi.updateUserPhoneNumber.mockRejectedValue(new Error('patch failed'));
 
     await useAccountStore.getState().updateUserPhoneNumber('9876543211', 8);
 
-    expect(useAccountStore.getState().userAccountsLoadingStatus).toBe(
+    expect(useAccountStore.getState().userPhoneNumberUpdateStatus).toBe(
       Status.Error,
     );
     expect(useAlertStore.getState().alert).toMatchObject({

@@ -1,5 +1,9 @@
 import type { CreateDepositFormValues } from '../utils/formSchemas';
 
+// The backend "bank types" the app supports; drives handler selection and the
+// `bankType` request header.
+export type BankType = 'banksoft' | 'peocit';
+
 export type UploadAccountsInput = {
   fileContent: string;
   bankCode: string;
@@ -17,6 +21,7 @@ export type ExportDepositInput = {
   agentCode: number;
   date: string;
   depositedAmount: number;
+  bankCode: string;
 };
 
 // Each bank type owns its complete flow: payload creation, API call and output.

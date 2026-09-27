@@ -26,6 +26,7 @@ import type {
 } from '../types/Agent';
 import { useAuthStore } from './AuthStore';
 import { getBankTypeHandler } from '../bankTypes';
+import { extractApiErrorMessage } from '../utils/helpers';
 
 type State = {
   fetchAgentLoadingStatus: Status;
@@ -41,17 +42,17 @@ type State = {
   exportDepositLoadingStatus: Status;
   voidTransactionLoadingStatus: Status;
   pastDeposits: PastDeposit[];
-  ResetDeviceStatus: Status;
+  resetDeviceStatus: Status;
 };
 
 type Action = {
-  fetchAgents: () => void;
-  fetchTransactions: (agentCode: number, date: string) => void;
-  createAgent: (paylaod: AddAgentFormValues) => void;
-  fetchAgentByCode: (agentCode: string) => void;
+  fetchAgents: () => Promise<void>;
+  fetchTransactions: (agentCode: number, date: string) => Promise<void>;
+  createAgent: (payload: AddAgentFormValues) => Promise<void>;
+  fetchAgentByCode: (agentCode: string) => Promise<void>;
   setSelectedAgent: (agent: Agent | null) => void;
-  updateAgent: (agentCode: string, agentData: Partial<Agent>) => void;
-  resetDevice: (phoneNumber: string) => void;
+  updateAgent: (agentCode: string, agentData: Partial<Agent>) => Promise<void>;
+  resetDevice: (phoneNumber: string) => Promise<void>;
   setCreateAgentLoadingStatus: (status: Status) => void;
   setUpdateAgentLoadingStatus: (status: Status) => void;
 
@@ -60,16 +61,16 @@ type Action = {
     agentCode: number,
     date: string,
     depositedAmount: number,
-  ) => void;
+  ) => Promise<void>;
   createDeposit: (
     formValues: CreateDepositFormValues,
     agentCode: number,
-  ) => void;
+  ) => Promise<void>;
   fetchPastDeposits: (
     agentCode: number,
     fromDate: string,
     toDate: string,
-  ) => void;
+  ) => Promise<void>;
   voidTransaction: (
     transactionId: number,
     agentCode: number,
@@ -91,39 +92,44 @@ export const useAgentStore = create<State & Action>((set) => ({
   exportDepositLoadingStatus: Status.Idle,
   voidTransactionLoadingStatus: Status.Idle,
   pastDeposits: [],
-  ResetDeviceStatus: Status.Idle,
+  resetDeviceStatus: Status.Idle,
   setSelectedAgent: (agent) => set({ selectedAgent: agent }),
   fetchAgents: async () => {
     set({ fetchAgentLoadingStatus: Status.Loading });
     try {
-      const agents = await fetchAgents();
+      const bankCode = useAuthStore.getState().bankCode ?? '';
+      const agents = await fetchAgents(bankCode);
       set({ agents, fetchAgentLoadingStatus: Status.Success });
     } catch (error) {
       console.error('Failed to fetch agents:', error);
       set({ fetchAgentLoadingStatus: Status.Error });
+      useAlertStore
+        .getState()
+        .showAlert(true, 'Failed to fetch agents. Please try again.', Severity.Error);
     }
   },
   createAgent: async (payload: AddAgentFormValues) => {
     const showAlert = useAlertStore.getState().showAlert;
     set({ createAgentLoadingStatus: Status.Loading });
     try {
-      await createAgent(payload);
+      await createAgent(payload, useAuthStore.getState().bankCode ?? '');
       set({ createAgentLoadingStatus: Status.Success });
       showAlert(true, 'Agent created successfully!!', Severity.Success);
     } catch (error) {
       console.error('Failed to create agent:', error);
       set({ createAgentLoadingStatus: Status.Error });
       showAlert(
-        false,
+        true,
         'Create Agent Failed, Please try again',
-        Severity.Warning,
+        Severity.Error,
       );
     }
   },
   fetchAgentByCode: async (agentCode: string) => {
     set({ fetchAgentByCodeLoadingStatus: Status.Loading });
     try {
-      const agent = await fetchAgentByCode(agentCode);
+      const bankCode = useAuthStore.getState().bankCode ?? '';
+      const agent = await fetchAgentByCode(agentCode, bankCode);
       set({
         selectedAgent: agent,
         fetchAgentByCodeLoadingStatus: Status.Success,
@@ -131,13 +137,17 @@ export const useAgentStore = create<State & Action>((set) => ({
     } catch (error) {
       console.error('Failed to fetch agent by code:', error);
       set({ fetchAgentByCodeLoadingStatus: Status.Error });
+      useAlertStore
+        .getState()
+        .showAlert(true, 'Failed to fetch agent. Please try again.', Severity.Error);
     }
   },
   fetchTransactions: async (agentCode: number, date: string) => {
     set({ fetchTransactionsLoadingStatus: Status.Loading, transactions: [] });
     const alertStore = useAlertStore.getState();
     try {
-      const transactions = await fetchTransactions(agentCode, date);
+      const bankCode = useAuthStore.getState().bankCode ?? '';
+      const transactions = await fetchTransactions(agentCode, date, bankCode);
       set({
         transactions,
         fetchTransactionsLoadingStatus: Status.Success,
@@ -161,13 +171,21 @@ export const useAgentStore = create<State & Action>((set) => ({
     set({ updateAgentLoadingStatus: Status.Loading });
     const showAlert = useAlertStore.getState().showAlert;
     try {
-      await updateAgent(agentCode, agentData);
+      await updateAgent(
+        agentCode,
+        agentData,
+        useAuthStore.getState().bankCode ?? '',
+      );
       set({ updateAgentLoadingStatus: Status.Success });
-      showAlert(true, 'Agent updated successfully!', 'success');
+      showAlert(true, 'Agent updated successfully!', Severity.Success);
     } catch (error) {
       console.error('Failed to update agent:', error);
       set({ updateAgentLoadingStatus: Status.Error });
-      showAlert(true, 'Failed to update agent. Please try again.', 'error');
+      showAlert(
+        true,
+        'Failed to update agent. Please try again.',
+        Severity.Error,
+      );
     }
   },
   createDeposit: async (
@@ -195,19 +213,13 @@ export const useAgentStore = create<State & Action>((set) => ({
       showAlert(
         true,
         'Deposit created and file downloaded successfully!',
-        'success',
+        Severity.Success,
       );
     } catch (error) {
-      const errorObj = error as {
-        response?: { data: string };
-        message?: string;
-      };
-      const errorMessage = errorObj.response?.data
-        ? JSON.parse(errorObj.response.data)?.error || 'Unknown error'
-        : errorObj.message || 'Unknown error';
+      const errorMessage = extractApiErrorMessage(error);
       console.error('Failed to create deposit:', errorMessage);
       set({ createDepositLoadingStatus: Status.Error });
-      showAlert(true, errorMessage, 'error');
+      showAlert(true, errorMessage, Severity.Error);
     }
   },
   exportDepositeById: async (
@@ -218,27 +230,22 @@ export const useAgentStore = create<State & Action>((set) => ({
   ) => {
     set({ exportDepositLoadingStatus: Status.Loading });
     const showAlert = useAlertStore.getState().showAlert;
-    const { bankType } = useAuthStore.getState();
+    const { bankType, bankCode } = useAuthStore.getState();
     try {
       await getBankTypeHandler(bankType).exportDeposit({
         depositId: depositeId,
         agentCode,
         date,
         depositedAmount,
+        bankCode: bankCode ?? '',
       });
       set({ exportDepositLoadingStatus: Status.Success });
-      showAlert(true, 'Deposit exported successfully!', 'success');
+      showAlert(true, 'Deposit exported successfully!', Severity.Success);
     } catch (error) {
-      const errorObj = error as {
-        response?: { data: string };
-        message?: string;
-      };
-      const errorMessage = errorObj.response?.data
-        ? JSON.parse(errorObj.response.data)?.error || 'Unknown error'
-        : errorObj.message || 'Unknown error';
+      const errorMessage = extractApiErrorMessage(error);
       console.error('Failed to export deposit:', errorMessage);
       set({ exportDepositLoadingStatus: Status.Error });
-      showAlert(true, errorMessage, 'error');
+      showAlert(true, errorMessage, Severity.Error);
     }
   },
   fetchPastDeposits: async (
@@ -249,14 +256,16 @@ export const useAgentStore = create<State & Action>((set) => ({
     set({ fetchPastDepositsLoadingStatus: Status.Loading });
     const alertStore = useAlertStore.getState();
     try {
-      const response = await fetchPastDeposits({
+      const response = (await fetchPastDeposits({
         agentCode,
         bankCode: useAuthStore.getState().bankCode || '',
         fromDate,
         toDate,
+      })) as PastDeposit[];
+      set({
+        pastDeposits: response,
+        fetchPastDepositsLoadingStatus: Status.Success,
       });
-      set({ pastDeposits: response });
-      set({ fetchPastDepositsLoadingStatus: Status.Success });
       alertStore.showAlert(
         true,
         'Past deposits fetched successfully.',
@@ -273,14 +282,15 @@ export const useAgentStore = create<State & Action>((set) => ({
     }
   },
   resetDevice: async (phoneNumber: string) => {
-    set({ ResetDeviceStatus: Status.Loading });
+    set({ resetDeviceStatus: Status.Loading });
     const alertStore = useAlertStore.getState();
     try {
       await deviceReset(phoneNumber);
-      set({ ResetDeviceStatus: Status.Success });
+      set({ resetDeviceStatus: Status.Success });
       alertStore.showAlert(true, 'Device reset successfully', Severity.Success);
-    } catch {
-      set({ ResetDeviceStatus: Status.Error });
+    } catch (error) {
+      console.error('Failed to reset device:', error);
+      set({ resetDeviceStatus: Status.Error });
       alertStore.showAlert(
         true,
         'Failed to reset device, please try again',
@@ -297,9 +307,11 @@ export const useAgentStore = create<State & Action>((set) => ({
     const alertStore = useAlertStore.getState();
     try {
       await deleteTransaction(transactionId);
-      set({ transactions: [] });
-      await useAgentStore.getState().fetchTransactions(agentCode, date);
-      set({ voidTransactionLoadingStatus: Status.Success });
+      // Refresh the list inline (via the service) so only the void toast shows,
+      // not a second "Transactions fetched successfully" toast.
+      const bankCode = useAuthStore.getState().bankCode ?? '';
+      const transactions = await fetchTransactions(agentCode, date, bankCode);
+      set({ transactions, voidTransactionLoadingStatus: Status.Success });
       alertStore.showAlert(
         true,
         'Transaction voided successfully.',

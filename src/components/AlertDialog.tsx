@@ -4,7 +4,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type AlertDialogProps = {
   open: boolean;
@@ -22,37 +22,50 @@ function AlertDialog({
   handleConfirm,
 }: AlertDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(
+    () => () => {
+      isMountedRef.current = false;
+    },
+    [],
+  );
+
   const confirmAndClose = async () => {
     setIsLoading(true);
-    await handleConfirm();
-    setIsLoading(false);
-    handleClose();
+    try {
+      await handleConfirm();
+    } finally {
+      // `handleConfirm` often unmounts this dialog; guard the state update.
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        handleClose();
+      }
+    }
   };
 
   return (
-    <>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            {description}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={isLoading}>
-            No
-          </Button>
-          <Button onClick={confirmAndClose} autoFocus loading={isLoading}>
-            Yes
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          {description}
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} disabled={isLoading}>
+          No
+        </Button>
+        <Button onClick={confirmAndClose} autoFocus loading={isLoading}>
+          Yes
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 

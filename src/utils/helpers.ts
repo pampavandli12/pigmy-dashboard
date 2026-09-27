@@ -11,6 +11,35 @@ import type {
 import * as XLSX from 'xlsx';
 import { useAlertStore } from '../store/AlertStore';
 
+/**
+ * Safely extract a user-facing message from an unknown error thrown by axios.
+ * Handles both an already-parsed object `response.data` and a raw JSON string,
+ * so parsing never throws inside a `catch` block.
+ */
+export const extractApiErrorMessage = (error: unknown): string => {
+  const errorObj = error as {
+    response?: { data?: unknown };
+    message?: string;
+  };
+  const data = errorObj?.response?.data;
+
+  if (data && typeof data === 'object' && 'error' in data) {
+    const message = (data as { error?: unknown }).error;
+    if (typeof message === 'string' && message) return message;
+  }
+
+  if (typeof data === 'string' && data) {
+    try {
+      const parsed = JSON.parse(data) as { error?: unknown };
+      if (typeof parsed?.error === 'string' && parsed.error) return parsed.error;
+    } catch {
+      return data;
+    }
+  }
+
+  return errorObj?.message || 'Unknown error';
+};
+
 export const mapAccountsToAgents = (
   accounts: AccountsResponse,
   agents: AgentsResponse,
@@ -158,17 +187,21 @@ export const parseCSVFile = async (
         }
 
         const worksheet = workbook.Sheets[sheetName];
+        if (!worksheet) {
+          throw new Error('The XLSX file should have some data.');
+        }
         const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(
           worksheet,
           { defval: '' },
         );
 
-        if (jsonData.length === 0) {
+        const firstRow = jsonData[0];
+        if (!firstRow) {
           throw new Error('The XLSX file should have some data.');
         }
 
         const missingColumns = REQUIRED_PHONE_NUMBER_COLUMNS.filter(
-          (column) => !(column in jsonData[0]),
+          (column) => !(column in firstRow),
         );
 
         if (missingColumns.length > 0) {
