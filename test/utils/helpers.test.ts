@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as XLSX from 'xlsx';
-import { MOCK_DEPOSIT_RESPONSE } from '../../src/utils/constants';
+import { MOCK_DEPOSIT_RESPONSE } from '../fixtures/deposits';
 import {
   generateDepositDatFile,
+  generatePeocitDepositDatFile,
   mapAccountsToAgents,
   parseCSVFile,
 } from '../../src/utils/helpers';
+import type { CreatePeocitDepositResponse } from '../../src/types/Agent';
 
 class FileReaderMock {
   onerror: (() => void) | null = null;
@@ -125,6 +127,64 @@ describe('helpers', () => {
     expect(click).toHaveBeenCalled();
     expect(removeChild).toHaveBeenCalledWith(link);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:deposit');
+  });
+
+  it('builds the peocit deposit DAT download with CRLF fixed-width rows', () => {
+    const click = vi.fn();
+    const link = { click, href: '', download: '' };
+    const appendChild = vi.fn();
+    const removeChild = vi.fn();
+    const createObjectURL = vi.fn(() => 'blob:peocit');
+    const revokeObjectURL = vi.fn();
+    const blobParts: string[] = [];
+
+    vi.stubGlobal('document', {
+      body: { appendChild, removeChild },
+      createElement: vi.fn(() => link),
+    });
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    vi.stubGlobal(
+      'Blob',
+      vi.fn(function BlobMock(parts: string[]) {
+        blobParts.push(...parts);
+        return { parts };
+      }),
+    );
+
+    const response: CreatePeocitDepositResponse = {
+      agentCode: 1001,
+      bankCode: 'PEO123',
+      totalDepositedAmount: 24950,
+      depositedDate: '19.08.26',
+      users: [
+        {
+          schemeAccntNumber: '380291',
+          collectedAmount: 2500,
+          finalAmount: 15000,
+          customerName: 'GULABI P',
+          collectedDate: '18.08.26',
+        },
+        {
+          schemeAccntNumber: '380260',
+          collectedAmount: 4000,
+          finalAmount: 12450,
+          customerName: 'RANJIT RAJ P N',
+          collectedDate: '18.08.26',
+        },
+      ],
+    };
+
+    generatePeocitDepositDatFile(response);
+
+    expect(blobParts[0]).toBe(
+      [
+        '      ,000002,024950          ,001001,19.08.26,12341234',
+        '380291,002500,GULABI P        ,015000,18.08.26,002500  ',
+        '380260,004000,RANJIT RAJ P N  ,012450,18.08.26,004000  ',
+      ].join('\r\n') + '\r\n',
+    );
+    expect(link).toMatchObject({ href: 'blob:peocit', download: 'pcrx.dat' });
+    expect(click).toHaveBeenCalled();
   });
 
   it('parses phone number data from an XLSX file', async () => {

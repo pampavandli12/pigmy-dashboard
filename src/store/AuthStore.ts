@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { LoginSubBranch } from '../types/sharedEnums';
+import type { BankType } from '../bankTypes/types';
 
 export interface AuthState {
   token: string | null;
   bankName: string | null;
   bankCode: string | null;
   city: string | null;
-  bankType: string | null;
+  bankType: BankType | null;
   subBranches: LoginSubBranch[];
   isHydrated: boolean;
   setToken: (t: string) => void;
@@ -34,7 +35,8 @@ export const useAuthStore = create<AuthState>()(
       setBankName: (b: string) => set({ bankName: b }),
       setBankCode: (c: string) => set({ bankCode: c }),
       setCity: (city: string) => set({ city }),
-      setBankType: (bankType: string) => set({ bankType }),
+      // Cast at the API boundary: the login response is a raw string.
+      setBankType: (bankType: string) => set({ bankType: bankType as BankType }),
       setSubBranches: (subBranches: LoginSubBranch[]) => set({ subBranches }),
       logout: () =>
         set({
@@ -49,6 +51,16 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      version: 1,
+      // Persist only the auth data — never the transient hydration flag.
+      partialize: (state) => ({
+        token: state.token,
+        bankName: state.bankName,
+        bankCode: state.bankCode,
+        city: state.city,
+        bankType: state.bankType,
+        subBranches: state.subBranches,
+      }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
       },

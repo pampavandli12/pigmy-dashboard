@@ -135,10 +135,12 @@ function AddAgent(props: AgentFormProps) {
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Typography variant='h4' sx={{ fontWeight: 700, mb: 1 }}>
-            Add New Agent
+            {isUpdate ? 'Edit Agent' : 'Add New Agent'}
           </Typography>
-          <Typography sx={{ color: '#666666', fontSize: '15px' }}>
-            Fill in the details below to create a new agent account.
+          <Typography sx={{ color: 'text.secondary', fontSize: '15px' }}>
+            {isUpdate
+              ? 'Update the details of this agent account.'
+              : 'Fill in the details below to create a new agent account.'}
           </Typography>
         </Box>
 

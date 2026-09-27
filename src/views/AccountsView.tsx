@@ -16,11 +16,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
-import type {
-  AccountFetchResponse,
-  UploadUserAccountPayload,
-} from '../types/Accounts';
-import { useAuthStore } from '../store/AuthStore';
+import type { AccountFetchResponse } from '../types/Accounts';
 import { Severity, Status } from '../types/sharedEnums';
 import { useAccountStore } from '../store/AccountStore';
 import { useAgentStore } from '../store/AgentStore';
@@ -49,9 +45,19 @@ const normalizePhoneNumber = (value: unknown) => String(value ?? '').trim();
 const isValidPhoneNumber = (value: unknown) =>
   /^\d{10}$/.test(normalizePhoneNumber(value));
 
+const NoAccountsOverlay = () => (
+  <NoRowsOverlay message='No accounts found. Please upload accounts to view them here.' />
+);
+const NoResultsOverlay = () => (
+  <NoRowsOverlay message='No accounts match the selected filters.' />
+);
+const gridSlots = {
+  noRowsOverlay: NoAccountsOverlay,
+  noResultsOverlay: NoResultsOverlay,
+};
+
 function AccountsView() {
   const [agentFilter, setAgentFilter] = useState<string[]>([]);
-  const bankCode = useAuthStore((state) => state.bankCode);
   const uploadUserAccountLoading = useAccountStore(
     (state) => state.uploadUserAccountStatus,
   );
@@ -74,9 +80,7 @@ function AccountsView() {
 
   const agents = useAgentStore((state) => state.agents);
   useEffect(() => {
-    (async () => {
-      await fetchUserAccounts();
-    })();
+    fetchUserAccounts();
   }, [fetchUserAccounts]);
 
   const handleAgentChange = (event: SelectChangeEvent<string[]>) => {
@@ -86,48 +90,26 @@ function AccountsView() {
     );
   };
 
-  const isUserAccountsLoading = useMemo(
-    () => userAccountsLoadingStatus === Status.Loading,
-    [userAccountsLoadingStatus],
-  );
+  const isUserAccountsLoading = userAccountsLoadingStatus === Status.Loading;
+  const isUploading = uploadUserAccountLoading === Status.Loading;
+  const isUpdatingPhoneNumbers = userPhoneNumberUpdateStatus === Status.Loading;
+
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Reset the input so re-selecting the same file fires onChange again.
+    e.target.value = '';
     if (!file || !(file instanceof Blob)) return;
 
     const reader = new FileReader();
-    reader.onload = async (event) => {
-      if (!event.target) return;
-      const content = event.target.result;
-      if (!content || typeof content !== 'string') return;
-      const lines = content.split('\n');
-      const [agent, ...users] = lines;
-      const userList: UploadUserAccountPayload['users'] = [];
-      users.forEach((element) => {
-        const [
-          schemeId,
-          accountNumber,
-          ,
-          customerName,
-          currentBalance,
-          lastDepositDate,
-        ] = element.split(',');
-        if (!accountNumber || !customerName) return; // skip invalid lines
-        userList.push({
-          schemeId,
-          accountNumber: Number(accountNumber),
-          customerName,
-          currentBalance: Number(currentBalance),
-          lastDepositDate,
-        });
-      });
-      const [, agentCode] = agent.split(',');
-      await uploadUserAccount({
-        agentCode: Number(agentCode),
-        bankCode: bankCode || '',
-        users: userList,
-      });
+    reader.onerror = () => {
+      showAlert(true, 'Unable to read the selected file.', Severity.Error);
     };
-    reader.readAsText(file); // 👈 key
+    reader.onload = async (event) => {
+      const content = event.target?.result;
+      if (typeof content !== 'string' || !content) return;
+      await uploadUserAccount(content);
+    };
+    reader.readAsText(file);
   };
   const handlePhoneNumberUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -138,20 +120,12 @@ function AccountsView() {
       e.target.value = '';
     }
   };
-  const isUploading = useMemo(
-    () => uploadUserAccountLoading === Status.Loading,
-    [uploadUserAccountLoading],
-  );
 
   const filteredAccounts = useMemo(() => {
     return userAccounts.filter((account) =>
       agentFilter.length > 0 ? agentFilter.includes(account.agentName) : true,
     );
   }, [agentFilter, userAccounts]);
-  const isUpdatingPhoneNumbers = useMemo(
-    () => userPhoneNumberUpdateStatus === Status.Loading,
-    [userPhoneNumberUpdateStatus],
-  );
   const handlePhoneNumberUpdate = async (
     updatedRow: AccountRow,
     originalRow: AccountRow,
@@ -216,7 +190,7 @@ function AccountsView() {
           <Typography variant='h4' sx={{ fontWeight: 800, mb: 0.5, mt: 1 }}>
             Customer Deposits
           </Typography>
-          <Typography sx={{ color: '#6b7280', mb: 2 }}>
+          <Typography sx={{ color: 'text.secondary', mb: 2 }}>
             View, search, and manage all customer deposits.
           </Typography>
         </Box>
@@ -233,8 +207,8 @@ function AccountsView() {
             Upload phone numbers
             <VisuallyHiddenInput
               type='file'
+              accept='.xlsx'
               onChange={handlePhoneNumberUpload}
-              multiple
             />
           </Button>
           {/* // update phone number */}
@@ -247,18 +221,14 @@ function AccountsView() {
             startIcon={<CloudUploadIcon />}
           >
             Upload users
-            <VisuallyHiddenInput
-              type='file'
-              onChange={handleFileUpload}
-              multiple
-            />
+            <VisuallyHiddenInput type='file' onChange={handleFileUpload} />
           </Button>
         </Box>
       </Box>
 
       <Paper
         elevation={1}
-        sx={{ p: 3, borderRadius: 2, mb: 3, backgroundColor: '#ffffff' }}
+        sx={{ p: 3, borderRadius: 2, mb: 3, backgroundColor: 'background.paper' }}
       >
         <Box
           sx={{
@@ -311,14 +281,7 @@ function AccountsView() {
               paginationMode='client'
               processRowUpdate={handlePhoneNumberUpdate}
               onProcessRowUpdateError={() => undefined}
-              slots={{
-                noRowsOverlay: () => (
-                  <NoRowsOverlay message='No accounts found. Please upload accounts to view them here.' />
-                ),
-                noResultsOverlay: () => (
-                  <NoRowsOverlay message='No accounts match the selected filters.' />
-                ),
-              }}
+              slots={gridSlots}
               pageSizeOptions={[5, 10, 25]}
               initialState={{
                 pagination: { paginationModel: { pageSize: 10, page: 0 } },

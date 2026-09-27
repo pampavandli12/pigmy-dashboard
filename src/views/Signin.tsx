@@ -5,7 +5,6 @@ import {
   Typography,
   Link,
   Paper,
-  CssBaseline,
   Alert,
 } from '@mui/material';
 import { login } from '../services/login';
@@ -16,6 +15,7 @@ import { loginSchema, type LoginFormValues } from '../utils/formSchemas';
 
 import { useAuthStore } from '../store/AuthStore';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { logger } from '../utils/logger';
 
 function Signin() {
   const {
@@ -27,24 +27,31 @@ function Signin() {
     resolver: zodResolver(loginSchema),
     mode: 'onChange', // better UX
   });
-  const authStore = useAuthStore();
+  // Subscribe only to `token`; setters are stable and read on demand in the handler.
+  const token = useAuthStore((state) => state.token);
   const navigate = useNavigate();
-  const token = authStore.token;
-  const location = useLocation(); // useLocation() can also be used if needed
+  const location = useLocation();
 
   const onSubmit = async (data: LoginFormValues) => {
-    // Handle login logic here
     try {
-      const respose = await login(data);
-      authStore.setToken(respose.token);
-      authStore.setBankName(respose.bankName);
-      authStore.setBankCode(respose.bankCode);
-      authStore.setCity(respose.city);
-      authStore.setBankType(respose.bankType);
-      authStore.setSubBranches(respose.subBranches);
+      const response = await login(data);
+      const {
+        setToken,
+        setBankName,
+        setBankCode,
+        setCity,
+        setBankType,
+        setSubBranches,
+      } = useAuthStore.getState();
+      setToken(response.token);
+      setBankName(response.bankName);
+      setBankCode(response.bankCode);
+      setCity(response.city);
+      setBankType(response.bankType);
+      setSubBranches(response.subBranches);
       navigate('/', { replace: true });
     } catch (error) {
-      console.error('Login failed:', JSON.stringify(error));
+      logger.error('Login failed:', error);
       setError('root', {
         type: 'manual',
         message: 'Login failed. Please check your credentials.',
@@ -53,12 +60,12 @@ function Signin() {
   };
   // 🟢 If already logged in → redirect
   if (token) {
-    const redirectTo = location.state?.from?.pathname ?? '/';
+    const state = location.state as { from?: { pathname?: string } } | null;
+    const redirectTo = state?.from?.pathname ?? '/';
     return <Navigate to={redirectTo} replace />;
   }
   return (
     <>
-      <CssBaseline />
       <Box
         sx={{
           minHeight: '100vh',
@@ -66,7 +73,7 @@ function Signin() {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#f5f5f5',
+          backgroundColor: 'background.default',
         }}
       >
         {/* Logo */}
@@ -74,7 +81,7 @@ function Signin() {
           sx={{
             width: 60,
             height: 60,
-            backgroundColor: '#1976d2',
+            backgroundColor: 'primary.main',
             transform: 'rotate(45deg)',
             borderRadius: '8px',
             marginBottom: 3,
@@ -86,7 +93,7 @@ function Signin() {
           variant='h3'
           sx={{
             fontWeight: 700,
-            color: '#1a1a1a',
+            color: 'text.primary',
             marginBottom: 1,
             fontSize: { xs: '28px', md: '36px' },
           }}

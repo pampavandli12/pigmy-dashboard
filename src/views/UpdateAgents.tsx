@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useAgentStore } from '../store/AgentStore';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Status } from '../types/sharedEnums';
@@ -6,6 +6,8 @@ import { Container } from '@mui/material';
 import AgentForm from '../components/AgentForm';
 import type { UpdateAgentFormValues } from '../utils/formSchemas';
 import LoadingComponent from '../components/LoadingComponent';
+
+const REDIRECT_DELAY_MS = 2500;
 
 export default function UpdateAgents() {
   const updateAgent = useAgentStore((state) => state.updateAgent);
@@ -21,10 +23,19 @@ export default function UpdateAgents() {
   );
   const params = useParams();
   const navigate = useNavigate();
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setUpdateAgentLoadingStatus(Status.Idle);
   }, [setUpdateAgentLoadingStatus]);
+
+  // Cancel a pending redirect if the component unmounts first.
+  useEffect(
+    () => () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (params.agentCode) {
@@ -37,7 +48,26 @@ export default function UpdateAgents() {
       };
       fetchData();
     }
-  }, [fetchAgentByCode, params.agentCode, updateAgent]);
+  }, [fetchAgentByCode, params.agentCode]);
+
+  // Stable object identity per loaded agent so AgentForm's reset effect fires
+  // only when the fetched data actually changes, not on every re-render.
+  const defaultValues = useMemo(
+    () =>
+      ({
+        name: agentData?.name,
+        address: agentData?.address,
+        phone: agentData?.phone,
+        email: agentData?.email,
+        limitAmount: agentData?.limitAmount,
+        type: agentData?.type,
+        status: agentData?.status,
+        agentCode: agentData?.agentCode,
+        password: agentData?.password,
+        graceDays: agentData?.graceDays,
+      }) as UpdateAgentFormValues,
+    [agentData],
+  );
 
   if (fetchAgentByCodeLoadingStatus === Status.Loading) {
     return <LoadingComponent />;
@@ -48,9 +78,9 @@ export default function UpdateAgents() {
         ...data,
         id: agentData?.id as number,
       });
-      setTimeout(() => {
+      redirectTimer.current = setTimeout(() => {
         navigate('/agents');
-      }, 2500);
+      }, REDIRECT_DELAY_MS);
     } catch (error) {
       console.error('Failed to update agent:', error);
     }
@@ -58,20 +88,7 @@ export default function UpdateAgents() {
   return (
     <Container>
       <AgentForm
-        defaultValues={
-          {
-            name: agentData?.name,
-            address: agentData?.address,
-            phone: agentData?.phone,
-            email: agentData?.email,
-            limitAmount: agentData?.limitAmount,
-            type: agentData?.type,
-            status: agentData?.status,
-            agentCode: agentData?.agentCode,
-            password: agentData?.password,
-            graceDays: agentData?.graceDays,
-          } as UpdateAgentFormValues
-        }
+        defaultValues={defaultValues}
         callback={(data) => handleSubmit(data)}
         isUpdate={true}
       />

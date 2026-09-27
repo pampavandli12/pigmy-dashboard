@@ -15,22 +15,23 @@ import type { Theme } from "@mui/material/styles";
 const DRAWER_WIDTH = 250;
 const DRAWER_COLLAPSED_WIDTH = 70;
 
+// Static navigation config — hoisted so it is not re-allocated on every render.
+const MENU_ITEMS = [
+  { label: "Dashboard", icon: <DashboardIcon />, path: "/" },
+  { label: "Agents", icon: <PersonIcon />, path: "agents" },
+  { label: "Accounts", icon: <CollectionsIcon />, path: "accounts" },
+  { label: "Reports", icon: <AssessmentIcon />, path: "reports" },
+];
+
 type Props = {
   drawerExpanded: boolean;
 };
 
 export default function SideDrawer({ drawerExpanded }: Props) {
-  const menuItems = [
-    { label: "Dashboard", icon: <DashboardIcon />, path: "/" },
-    { label: "Agents", icon: <PersonIcon />, path: "agents" },
-    { label: "Accounts", icon: <CollectionsIcon />, path: "accounts" },
-    { label: "Reports", icon: <AssessmentIcon />, path: "reports" },
-  ];
-
   const drawerContent = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <List sx={{ flex: 1 }}>
-        {menuItems.map((item) => (
+        {MENU_ITEMS.map((item) => (
           <ListItem key={item.label} disablePadding>
             <ListItemButton
               component={NavLink}
@@ -83,7 +84,7 @@ export default function SideDrawer({ drawerExpanded }: Props) {
               easing: theme.transitions.easing.easeInOut,
               duration: theme.transitions.duration.standard,
             }),
-          borderRight: "1px solid #e0e0e0",
+          borderRight: (theme) => `1px solid ${theme.palette.divider}`,
         },
       }}
     >

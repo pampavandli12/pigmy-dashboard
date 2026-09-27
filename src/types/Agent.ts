@@ -49,3 +49,19 @@ export interface CreateDepositResponse {
   depositedDate: string;
   users: DepositCollection[];
 }
+
+export interface PeocitDepositCollection {
+  schemeAccntNumber: string;
+  collectedAmount: number;
+  finalAmount: number;
+  customerName: string;
+  collectedDate: string;
+}
+
+export interface CreatePeocitDepositResponse {
+  agentCode: number;
+  bankCode: string;
+  totalDepositedAmount: number;
+  depositedDate: string;
+  users: PeocitDepositCollection[];
+}

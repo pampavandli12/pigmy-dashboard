@@ -4,9 +4,41 @@ import type {
   ParsedPhoneNumberRow,
 } from '../types/Accounts';
 import type { AgentsResponse } from '../types/sharedEnums';
-import type { CreateDepositResponse } from '../types/Agent';
+import type {
+  CreateDepositResponse,
+  CreatePeocitDepositResponse,
+} from '../types/Agent';
 import * as XLSX from 'xlsx';
 import { useAlertStore } from '../store/AlertStore';
+
+/**
+ * Safely extract a user-facing message from an unknown error thrown by axios.
+ * Handles both an already-parsed object `response.data` and a raw JSON string,
+ * so parsing never throws inside a `catch` block.
+ */
+export const extractApiErrorMessage = (error: unknown): string => {
+  const errorObj = error as {
+    response?: { data?: unknown };
+    message?: string;
+  };
+  const data = errorObj?.response?.data;
+
+  if (data && typeof data === 'object' && 'error' in data) {
+    const message = (data as { error?: unknown }).error;
+    if (typeof message === 'string' && message) return message;
+  }
+
+  if (typeof data === 'string' && data) {
+    try {
+      const parsed = JSON.parse(data) as { error?: unknown };
+      if (typeof parsed?.error === 'string' && parsed.error) return parsed.error;
+    } catch {
+      return data;
+    }
+  }
+
+  return errorObj?.message || 'Unknown error';
+};
 
 export const mapAccountsToAgents = (
   accounts: AccountsResponse,
@@ -22,16 +54,33 @@ export const mapAccountsToAgents = (
   return agentMap;
 };
 
+// Left-aligned column: truncate to width, then pad the remainder with spaces.
+const formatColumn = (value: string | number, width: number): string =>
+  String(value).slice(0, width).padEnd(width, ' ');
+// Right-aligned numeric column padded with spaces.
+const formatNumberColumn = (value: number, width: number): string =>
+  String(value).slice(0, width).padStart(width, ' ');
+// Right-aligned numeric column padded with zeros.
+const formatZeroPaddedNumberColumn = (value: number, width: number): string =>
+  String(value).slice(0, width).padStart(width, '0');
+
+// Shared browser download of a generated .DAT file.
+const downloadDatFile = (content: string, filename: string): void => {
+  const blob = new Blob([content], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 export const generateDepositDatFile = (
   depositData: CreateDepositResponse,
 ): void => {
   const lines: string[] = [];
-  const formatColumn = (value: string | number, width: number): string =>
-    String(value).slice(0, width).padEnd(width, ' ');
-  const formatNumberColumn = (value: number, width: number): string =>
-    String(value).slice(0, width).padStart(width, ' ');
-  const formatZeroPaddedNumberColumn = (value: number, width: number): string =>
-    String(value).slice(0, width).padStart(width, '0');
 
   const agentInformationRow = [
     formatColumn('', 4),
@@ -59,16 +108,44 @@ export const generateDepositDatFile = (
     lines.push(row);
   });
 
-  const datContent = lines.join('\n');
-  const blob = new Blob([datContent], { type: 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `pcrx.dat`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  downloadDatFile(lines.join('\n'), 'pcrx.dat');
+};
+
+// Peocit .DAT layout differs from banksoft: combined scheme/account number, a separate
+// finalAmount column, fixed 55-char CRLF-terminated rows.
+export const generatePeocitDepositDatFile = (
+  depositData: CreatePeocitDepositResponse,
+): void => {
+  const lines: string[] = [];
+
+  const agentInformationRow = [
+    ' '.repeat(6),
+    formatZeroPaddedNumberColumn(depositData.users.length, 6),
+    formatColumn(
+      formatZeroPaddedNumberColumn(depositData.totalDepositedAmount, 6),
+      16,
+    ),
+    formatZeroPaddedNumberColumn(depositData.agentCode, 6),
+    formatColumn(depositData.depositedDate, 8),
+    '12341234',
+  ].join(',');
+
+  lines.push(agentInformationRow);
+
+  depositData.users.forEach((user) => {
+    const row = [
+      formatColumn(user.schemeAccntNumber, 6),
+      formatZeroPaddedNumberColumn(user.collectedAmount, 6),
+      formatColumn(user.customerName, 16),
+      formatZeroPaddedNumberColumn(user.finalAmount, 6),
+      formatColumn(user.collectedDate, 8),
+      formatColumn(formatZeroPaddedNumberColumn(user.collectedAmount, 6), 8),
+    ].join(',');
+
+    lines.push(row);
+  });
+
+  downloadDatFile(`${lines.join('\r\n')}\r\n`, 'pcrx.dat');
 };
 
 const REQUIRED_PHONE_NUMBER_COLUMNS = ['Mobile1', 'AccountNumber'] as const;
@@ -110,17 +187,21 @@ export const parseCSVFile = async (
         }
 
         const worksheet = workbook.Sheets[sheetName];
+        if (!worksheet) {
+          throw new Error('The XLSX file should have some data.');
+        }
         const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(
           worksheet,
           { defval: '' },
         );
 
-        if (jsonData.length === 0) {
+        const firstRow = jsonData[0];
+        if (!firstRow) {
           throw new Error('The XLSX file should have some data.');
         }
 
         const missingColumns = REQUIRED_PHONE_NUMBER_COLUMNS.filter(
-          (column) => !(column in jsonData[0]),
+          (column) => !(column in firstRow),
         );
 
         if (missingColumns.length > 0) {

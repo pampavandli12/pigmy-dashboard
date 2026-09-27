@@ -20,8 +20,8 @@ const agentApi = vi.hoisted(() => ({
 const accountApi = vi.hoisted(() => ({
   fetchUserAccounts: vi.fn(),
   updateUserAccounts: vi.fn(),
-  UpdateUserPhoneNumber: vi.fn(),
-  uploadUserAccount: vi.fn(),
+  updateUserPhoneNumber: vi.fn(),
+  uploadBanksoftAccounts: vi.fn(),
 }));
 
 vi.mock('../../src/services/agents', () => ({
@@ -80,7 +80,7 @@ describe('AccountStore', () => {
         bankCode: 'BANK1',
       },
     ]);
-    accountApi.uploadUserAccount.mockResolvedValue({});
+    accountApi.uploadBanksoftAccounts.mockResolvedValue({});
 
     await useAccountStore.getState().fetchUserAccounts();
     expect(useAccountStore.getState()).toMatchObject({
@@ -88,21 +88,17 @@ describe('AccountStore', () => {
       userAccounts: [expect.objectContaining({ agentName: 'Agent One' })],
     });
 
-    await useAccountStore.getState().uploadUserAccount({
-      agentCode: 77,
-      bankCode: 'BANK1',
-      users: [],
-    });
+    await useAccountStore.getState().uploadUserAccount(',77\n001,100,,Asha,500,2026-04-27');
     expect(useAccountStore.getState().uploadUserAccountStatus).toBe(
       Status.Success,
     );
 
     accountApi.fetchUserAccounts.mockRejectedValue(new Error('fetch failed'));
-    accountApi.uploadUserAccount.mockRejectedValue(new Error('upload failed'));
+    accountApi.uploadBanksoftAccounts.mockRejectedValue(new Error('upload failed'));
     await useAccountStore.getState().fetchUserAccounts();
     await useAccountStore
       .getState()
-      .uploadUserAccount({ agentCode: 77, bankCode: 'BANK1', users: [] });
+      .uploadUserAccount(',77\n001,100,,Asha,500,2026-04-27');
     expect(useAccountStore.getState()).toMatchObject({
       userAccountsLoadingStatus: Status.Error,
       uploadUserAccountStatus: Status.Error,
@@ -147,17 +143,17 @@ describe('AccountStore', () => {
   });
 
   it('updates a single user phone number with success and error statuses', async () => {
-    accountApi.UpdateUserPhoneNumber.mockResolvedValue({});
+    accountApi.updateUserPhoneNumber.mockResolvedValue({});
     accountApi.fetchUserAccounts.mockResolvedValue([]);
 
     await useAccountStore.getState().updateUserPhoneNumber('9876543210', 7);
 
-    expect(accountApi.UpdateUserPhoneNumber).toHaveBeenCalledWith(
+    expect(accountApi.updateUserPhoneNumber).toHaveBeenCalledWith(
       '9876543210',
       7,
     );
     expect(accountApi.fetchUserAccounts).toHaveBeenCalled();
-    expect(useAccountStore.getState().userAccountsLoadingStatus).toBe(
+    expect(useAccountStore.getState().userPhoneNumberUpdateStatus).toBe(
       Status.Success,
     );
     expect(useAlertStore.getState().alert).toMatchObject({
@@ -166,11 +162,11 @@ describe('AccountStore', () => {
       severity: 'success',
     });
 
-    accountApi.UpdateUserPhoneNumber.mockRejectedValue(new Error('patch failed'));
+    accountApi.updateUserPhoneNumber.mockRejectedValue(new Error('patch failed'));
 
     await useAccountStore.getState().updateUserPhoneNumber('9876543211', 8);
 
-    expect(useAccountStore.getState().userAccountsLoadingStatus).toBe(
+    expect(useAccountStore.getState().userPhoneNumberUpdateStatus).toBe(
       Status.Error,
     );
     expect(useAlertStore.getState().alert).toMatchObject({
@@ -178,5 +174,17 @@ describe('AccountStore', () => {
       message: 'Failed to update phone number. Please try again.',
       severity: 'error',
     });
+  });
+
+  it('reports an error for an unsupported bank type on upload', async () => {
+    useAuthStore.setState({ bankType: 'unknown' });
+
+    await useAccountStore.getState().uploadUserAccount(',77');
+
+    expect(accountApi.uploadBanksoftAccounts).not.toHaveBeenCalled();
+    expect(useAccountStore.getState().uploadUserAccountStatus).toBe(
+      Status.Error,
+    );
+    useAuthStore.setState({ bankType: null });
   });
 });

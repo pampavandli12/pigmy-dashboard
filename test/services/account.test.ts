@@ -24,32 +24,44 @@ vi.mock('../../src/services/axios', () => ({ api: apiMock }));
 import {
   fetchUserAccounts,
   updateUserAccounts,
-  UpdateUserPhoneNumber,
-  uploadUserAccount,
+  updateUserPhoneNumber,
+  uploadBanksoftAccounts,
+  uploadPeocitAccounts,
 } from '../../src/services/account';
-import { useAuthStore } from '../../src/store/AuthStore';
 import { API_URLS } from '../../src/utils/constants';
 
 describe('account service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useAuthStore.setState({ bankCode: 'BANK1', token: 'token' });
     apiMock.get.mockResolvedValue({ data: 'get-data' });
     apiMock.patch.mockResolvedValue({ data: 'patch-data' });
     apiMock.post.mockResolvedValue({ data: 'post-data' });
   });
 
   it('fetches and uploads user accounts', async () => {
-    await expect(fetchUserAccounts()).resolves.toBe('get-data');
+    await expect(fetchUserAccounts('BANK1')).resolves.toBe('get-data');
     expect(apiMock.get).toHaveBeenLastCalledWith(
       `${API_URLS.USER_ACCOUNTS}?bankCode=BANK1`,
     );
 
     const uploadPayload = { agentCode: 77, bankCode: 'BANK1', users: [] };
-    await expect(uploadUserAccount(uploadPayload)).resolves.toBe('post-data');
+    await expect(uploadBanksoftAccounts(uploadPayload)).resolves.toBe('post-data');
     expect(apiMock.post).toHaveBeenLastCalledWith(
-      API_URLS.UPLOAD_ACCOUNTS,
+      API_URLS.UPLOAD_ACCOUNTS.banksoft,
       uploadPayload,
+    );
+
+
+    const peocitPayload = {
+      agentCode: 1001,
+      bankCode: 'BANK1',
+      vpncode: '380292',
+      users: [],
+    };
+    await expect(uploadPeocitAccounts(peocitPayload)).resolves.toBe('post-data');
+    expect(apiMock.post).toHaveBeenLastCalledWith(
+      API_URLS.UPLOAD_ACCOUNTS.peocit,
+      peocitPayload,
     );
 
     const updatePayload = {
@@ -62,11 +74,11 @@ describe('account service', () => {
       updatePayload,
     );
 
-    await expect(UpdateUserPhoneNumber('9876543210', 7)).resolves.toBe(
+    await expect(updateUserPhoneNumber('9876543210', 7)).resolves.toBe(
       'patch-data',
     );
     expect(apiMock.patch).toHaveBeenLastCalledWith(
-      `${API_URLS.UPDATE_PHONY_BY_ACCOUNT}?userId=7&mobilenumber=9876543210`,
+      `${API_URLS.UPDATE_PHONE_BY_ACCOUNT}?userId=7&mobilenumber=9876543210`,
     );
   });
 });

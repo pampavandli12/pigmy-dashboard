@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import {
   fetchUserAccounts,
   updateUserAccounts,
-  UpdateUserPhoneNumber,
-  uploadUserAccount,
+  updateUserPhoneNumber,
 } from '../services/account';
 import { useAlertStore } from './AlertStore';
 import { Severity, Status } from '../types/sharedEnums';
@@ -11,21 +10,22 @@ import type {
   AccountFetchResponse,
   AccountUpdatePayload,
   ParsedPhoneNumberRow,
-  UploadUserAccountPayload,
 } from '../types/Accounts';
 import { mapAccountsToAgents } from '../utils/helpers';
 import { useAgentStore } from './AgentStore';
 import { useAuthStore } from './AuthStore';
+import { getBankTypeHandler } from '../bankTypes';
+import { FileParseError } from '../bankTypes/parseUtils';
 
 interface AccountState {
   uploadUserAccountStatus: Status;
-  uploadUserAccount: (accountData: UploadUserAccountPayload) => Promise<void>;
+  uploadUserAccount: (fileContent: string) => Promise<void>;
   userAccounts: AccountFetchResponse;
   userAccountsLoadingStatus: Status;
   userPhoneNumberUpdateStatus: Status;
 }
 type Action = {
-  uploadUserAccount: (accountData: UploadUserAccountPayload) => Promise<void>;
+  uploadUserAccount: (fileContent: string) => Promise<void>;
   fetchUserAccounts: () => Promise<void>;
   updateUserAccounts: (accounts: ParsedPhoneNumberRow[]) => Promise<void>;
   updateUserPhoneNumber: (
@@ -39,16 +39,18 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
   userAccountsLoadingStatus: Status.Idle,
   userPhoneNumberUpdateStatus: Status.Idle,
   fetchUserAccounts: async () => {
-    const agentLoadingStatus = useAgentStore.getState().fetchAgentLoadingStatus;
     const fetchAgents = useAgentStore.getState().fetchAgents;
 
     set({ userAccountsLoadingStatus: Status.Loading });
 
     try {
-      if (agentLoadingStatus === Status.Idle) {
+      // Agent names are needed to map accounts. Ensure they are loaded and awaited
+      // (covers idle, error, and an in-flight fetch from another screen).
+      if (useAgentStore.getState().agents.length === 0) {
         await fetchAgents();
       }
-      const accounts = await fetchUserAccounts();
+      const bankCode = useAuthStore.getState().bankCode ?? '';
+      const accounts = await fetchUserAccounts(bankCode);
       const agents = useAgentStore.getState().agents;
       set({
         userAccounts: mapAccountsToAgents(accounts, agents),
@@ -60,7 +62,8 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
         'User accounts fetched successfully.',
         Severity.Success,
       );
-    } catch {
+    } catch (error) {
+      console.error('Failed to fetch user accounts:', error);
       set({ userAccountsLoadingStatus: Status.Error });
       const alertStore = useAlertStore.getState();
       alertStore.showAlert(
@@ -70,23 +73,30 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
       );
     }
   },
-  uploadUserAccount: async (accountData: UploadUserAccountPayload) => {
+  uploadUserAccount: async (fileContent: string) => {
     const alertStore = useAlertStore.getState();
+    const { bankCode, bankType } = useAuthStore.getState();
     set({ uploadUserAccountStatus: Status.Loading });
 
     try {
-      await uploadUserAccount(accountData);
+      await getBankTypeHandler(bankType).uploadAccounts({
+        fileContent,
+        bankCode: bankCode || '',
+      });
       set({ uploadUserAccountStatus: Status.Success });
       alertStore.showAlert(
         true,
         'Customers are added successfully...',
         Severity.Success,
       );
-    } catch {
+    } catch (error) {
+      console.error('Failed to upload accounts:', error);
       set({ uploadUserAccountStatus: Status.Error });
       alertStore.showAlert(
         true,
-        'Failed to upload accounts. Please try again.',
+        error instanceof FileParseError
+          ? error.message
+          : 'Failed to upload accounts. Please try again.',
         Severity.Error,
       );
     }
@@ -107,7 +117,8 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
         'Accounts updated successfully.',
         Severity.Success,
       );
-    } catch {
+    } catch (error) {
+      console.error('Failed to update accounts:', error);
       alertStore.showAlert(
         true,
         'Failed to update accounts. Please try again.',
@@ -115,27 +126,28 @@ export const useAccountStore = create<AccountState & Action>((set) => ({
       );
       set({ userPhoneNumberUpdateStatus: Status.Error });
     }
-    // Here you would typically make an API call to update the accounts with the new phone numbers
   },
   updateUserPhoneNumber: async (updateMobileNumber: string, userId: number) => {
     const alertStore = useAlertStore.getState();
-    set({ userAccountsLoadingStatus: Status.Loading });
+    set({ userPhoneNumberUpdateStatus: Status.Loading });
     try {
-      await UpdateUserPhoneNumber(updateMobileNumber, userId);
-      await fetchUserAccounts(); // Refresh accounts after updating phone number
-      set({ userAccountsLoadingStatus: Status.Success });
+      await updateUserPhoneNumber(updateMobileNumber, userId);
+      // Refresh via the store action so the mapped `userAccounts` state updates.
+      await useAccountStore.getState().fetchUserAccounts();
+      set({ userPhoneNumberUpdateStatus: Status.Success });
       alertStore.showAlert(
         true,
         'Phone number updated successfully.',
         Severity.Success,
       );
-    } catch {
+    } catch (error) {
+      console.error('Failed to update phone number:', error);
       alertStore.showAlert(
         true,
         'Failed to update phone number. Please try again.',
         Severity.Error,
       );
-      set({ userAccountsLoadingStatus: Status.Error });
+      set({ userPhoneNumberUpdateStatus: Status.Error });
     }
   },
 }));

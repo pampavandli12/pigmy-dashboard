@@ -4,6 +4,19 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
 
+  build: {
+    rollupOptions: {
+      output: {
+        // Split large third-party libs into their own cached chunks.
+        manualChunks: {
+          'mui-datagrid': ['@mui/x-data-grid'],
+          'date-pickers': ['@mui/x-date-pickers', 'dayjs'],
+          xlsx: ['xlsx'],
+        },
+      },
+    },
+  },
+
   test: {
     globals: true,
     environment: 'jsdom',

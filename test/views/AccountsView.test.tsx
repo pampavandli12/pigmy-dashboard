@@ -68,7 +68,9 @@ describe('AccountsView', () => {
 
     expect(parseCSVFile).toHaveBeenCalled();
     expect(storeState.accountStore.updateUserAccounts).toHaveBeenCalled();
-    expect(storeState.accountStore.uploadUserAccount).toHaveBeenCalled();
+    expect(storeState.accountStore.uploadUserAccount).toHaveBeenCalledWith(
+      ',77\n001,100,,Asha,500,2026-04-27\nbad-row',
+    );
     unmount();
   });
 });
