@@ -4,14 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- `npm run dev` — start the Vite dev server with HMR.
-- `npm run build` — runs the full test suite (`test:run`), then `tsc -b`, then `vite build`. Tests gate the build.
-- `npm run lint` — ESLint over both `src` and `test` (`.ts`/`.tsx`). ESLint is the source of truth for style.
-- `npm run test:run` — run Vitest once (CI/pre-commit mode).
-- `npm test` — Vitest in watch mode.
-- `npm run coverage` — V8 coverage to `coverage/`. Thresholds are enforced: statements/lines ≥80%, functions ≥75%, branches ≥60%.
-- Run a single test file: `npx vitest run test/views/Reports.test.tsx`.
-- Filter by test name: `npx vitest run -t "shows the error alert"`.
+This repo uses pnpm (`brew install pnpm`). `npm install` is rejected by the `preinstall` script.
+
+- `pnpm dev` — start the Vite dev server with HMR.
+- `pnpm build` — runs the full test suite (`test:run`), then `tsc -b`, then `vite build`. Tests gate the build.
+- `pnpm lint` — ESLint over both `src` and `test` (`.ts`/`.tsx`). ESLint is the source of truth for style.
+- `pnpm test:run` — run Vitest once (CI/pre-commit mode).
+- `pnpm test` — Vitest in watch mode.
+- `pnpm coverage` — V8 coverage to `coverage/`. Thresholds are enforced: statements/lines ≥80%, functions ≥75%, branches ≥60%.
+- Run a single test file: `pnpm exec vitest run test/views/Reports.test.tsx`.
+- Filter by test name: `pnpm exec vitest run -t "shows the error alert"`.
 
 The Husky pre-commit hook runs lint-staged (`eslint --fix` and `vitest related --run`) on staged files.
 

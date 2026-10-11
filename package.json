@@ -3,9 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=12"
+  },
   "scripts": {
+    "preinstall": "node -e \"const ua=process.env.npm_config_user_agent||''; if(!ua.startsWith('pnpm/')){console.error('This repo uses pnpm. Install it with: brew install pnpm'); process.exit(1)}\"",
     "dev": "vite",
-    "build": "npm run test:run && tsc -b && vite build",
+    "build": "pnpm run test:run && tsc -b && vite build",
     "lint": "eslint src test",
     "typecheck": "tsc -b",
     "test": "vitest",

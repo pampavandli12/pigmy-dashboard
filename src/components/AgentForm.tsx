@@ -483,17 +483,17 @@ function AddAgent(props: AgentFormProps) {
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={(field.value ?? 'active') === 'active'}
+                          checked={(field.value ?? 'Active') === 'Active'}
                           onChange={(_, checked) =>
-                            field.onChange(checked ? 'active' : 'inactive')
+                            field.onChange(checked ? 'Active' : 'inactive')
                           }
                           onBlur={field.onBlur}
                           inputRef={field.ref}
                         />
                       }
                       label={
-                        (field.value ?? 'active') === 'active'
-                          ? 'active'
+                        (field.value ?? 'Active') === 'Active'
+                          ? 'Active'
                           : 'inactive'
                       }
                     />

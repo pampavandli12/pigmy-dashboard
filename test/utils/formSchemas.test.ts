@@ -32,7 +32,7 @@ describe('formSchemas', () => {
         type: 'agent',
         limitAmount: '2500',
       }),
-    ).toMatchObject({ agentCode: 101, limitAmount: 2500, status: 'active' });
+    ).toMatchObject({ agentCode: 101, limitAmount: 2500, status: 'Active' });
     expect(
       updateAgentSchema.parse({
         name: 'Ravi Kumar',

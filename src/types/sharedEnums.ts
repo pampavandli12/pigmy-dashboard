@@ -37,7 +37,7 @@ export type Agent = {
   type: 'agent' | 'employee';
   limitAmount: number;
   graceDays: number;
-  status: 'active' | 'inactive';
+  status: 'Active' | 'inactive';
   password?: string;
 };
 

@@ -29,11 +29,13 @@ export const API_URLS = {
   UPLOAD_ACCOUNTS: {
     banksoft: '/pigmy/v1/user',
     peocit: '/pigmy/v1/user/peocit',
+    sledger: '/pigmy/v1/user/sledger',
   },
   USER_ACCOUNTS: '/pigmy/v1/user',
   CREATE_DEPOSIT: {
     banksoft: '/pigmy/v1/agent/deposit/multipleDate',
     peocit: '/pigmy/v1/agent/deposit/multipleDate/peocit',
+    sledger: '/pigmy/v1/agent/deposit/multipleDate/sledger',
   },
   PAST_DEPOSITS: '/pigmy/v1/agent/pastDeposits',
   EXPORT_DEPOSIT_BY_ID: '/pigmy/v1/agent/export',

@@ -8,13 +8,13 @@ Tests live in `test/` and mirror the source layout (for example, `src/views/Repo
 
 ## Build, Test, and Development Commands
 
-- `npm install` installs the locked dependency set and configures Husky hooks.
-- `npm run dev` starts the Vite development server with hot reload.
-- `npm run build` runs tests, TypeScript project builds, and the production Vite bundle.
-- `npm run preview` serves the production bundle locally.
-- `npm run lint` checks all TypeScript and TSX source and test files with ESLint.
-- `npm test` starts Vitest in watch mode; `npm run test:run` runs it once.
-- `npm run coverage` writes V8 coverage reports to `coverage/`.
+- `pnpm install` installs the locked dependency set and configures Husky hooks. This repo uses pnpm (`brew install pnpm`); `npm install` is rejected.
+- `pnpm dev` starts the Vite development server with hot reload.
+- `pnpm build` runs tests, TypeScript project builds, and the production Vite bundle.
+- `pnpm preview` serves the production bundle locally.
+- `pnpm lint` checks all TypeScript and TSX source and test files with ESLint.
+- `pnpm test` starts Vitest in watch mode; `pnpm test:run` runs it once.
+- `pnpm coverage` writes V8 coverage reports to `coverage/`.
 
 ## Coding Style & Naming Conventions
 
@@ -26,4 +26,4 @@ Vitest runs in `jsdom` with global test APIs. Name tests `*.test.ts` or `*.test.
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short, imperative, lowercase summaries such as `fixing update phone number api`. Keep each commit focused and explain the user-visible outcome. Before opening a pull request, ensure `npm run lint`, `npm run test:run`, and `npm run build` pass. PRs should include a concise description, linked issue when applicable, test evidence, and screenshots for UI changes. The pre-commit hook runs lint-staged, ESLint, and the full test suite.
+Recent commits use short, imperative, lowercase summaries such as `fixing update phone number api`. Keep each commit focused and explain the user-visible outcome. Before opening a pull request, ensure `pnpm lint`, `pnpm test:run`, and `pnpm build` pass. PRs should include a concise description, linked issue when applicable, test evidence, and screenshots for UI changes. The pre-commit hook runs lint-staged, ESLint, and the full test suite.

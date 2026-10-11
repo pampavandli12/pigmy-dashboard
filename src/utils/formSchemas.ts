@@ -56,7 +56,7 @@ export const addAgentSchema = z.object({
     error: (iss) =>
       iss.input === undefined ? 'Field is required.' : 'Invalid input.',
   }),
-  status: z.enum(['active', 'inactive']).default('active'),
+  status: z.enum(['Active', 'inactive']).default('Active'),
 
   limitAmount: z.coerce
     .number({
