@@ -2,7 +2,7 @@ import type { CreateDepositFormValues } from '../utils/formSchemas';
 
 // The backend "bank types" the app supports; drives handler selection and the
 // `bankType` request header.
-export type BankType = 'banksoft' | 'peocit';
+export type BankType = 'banksoft' | 'peocit' | 'sledger';
 
 export type UploadAccountsInput = {
   fileContent: string;

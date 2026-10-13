@@ -7,6 +7,7 @@ import type { AgentsResponse } from '../types/sharedEnums';
 import type {
   CreateDepositResponse,
   CreatePeocitDepositResponse,
+  CreateSledgerDepositResponse,
 } from '../types/Agent';
 import * as XLSX from 'xlsx';
 import { useAlertStore } from '../store/AlertStore';
@@ -58,11 +59,18 @@ export const mapAccountsToAgents = (
 const formatColumn = (value: string | number, width: number): string =>
   String(value).slice(0, width).padEnd(width, ' ');
 // Right-aligned numeric column padded with spaces.
-const formatNumberColumn = (value: number, width: number): string =>
+const formatNumberColumn = (value: string | number, width: number): string =>
   String(value).slice(0, width).padStart(width, ' ');
 // Right-aligned numeric column padded with zeros.
 const formatZeroPaddedNumberColumn = (value: number, width: number): string =>
   String(value).slice(0, width).padStart(width, '0');
+// Currency amount as an <intDigits>-digit zero-padded integer part plus 2 decimals
+// (e.g. formatAmount(52650, 7) -> "0052650.00").
+const formatAmount = (value: number, intDigits: number): string => {
+  const fixed = value.toFixed(2);
+  const dotIndex = fixed.indexOf('.');
+  return `${fixed.slice(0, dotIndex).padStart(intDigits, '0')}${fixed.slice(dotIndex)}`;
+};
 
 // Shared browser download of a generated .DAT file.
 const downloadDatFile = (content: string, filename: string): void => {
@@ -146,6 +154,45 @@ export const generatePeocitDepositDatFile = (
   });
 
   downloadDatFile(`${lines.join('\r\n')}\r\n`, 'pcrx.dat');
+};
+
+// Sledger .DAT layout: header and data rows share the same 7-column width
+// template (3, 5, 19, 20, 10, 8, 5).
+export const generateSledgerDepositDatFile = (
+  depositData: CreateSledgerDepositResponse,
+): void => {
+  const lines: string[] = [];
+
+  const agentInformationRow = [
+    '000',
+    '12345',
+    formatNumberColumn(formatAmount(depositData.totalDepositedAmount, 7), 19),
+    formatNumberColumn(
+      formatZeroPaddedNumberColumn(depositData.users.length, 5),
+      20,
+    ),
+    formatZeroPaddedNumberColumn(depositData.agentCode, 10),
+    formatColumn(depositData.depositedDate, 8),
+    '12345',
+  ].join(',');
+
+  lines.push(agentInformationRow);
+
+  depositData.users.forEach((user, index) => {
+    const row = [
+      formatColumn(user.branchCode, 3),
+      formatColumn(user.schemeId, 5),
+      formatColumn(user.accountNumber, 19),
+      formatColumn(user.customerName, 20),
+      formatAmount(user.collectedAmount, 7),
+      formatColumn(user.collectedDate, 8),
+      formatZeroPaddedNumberColumn(index + 1, 5),
+    ].join(',');
+
+    lines.push(row);
+  });
+
+  downloadDatFile(lines.join('\n'), 'pcrx.dat');
 };
 
 const REQUIRED_PHONE_NUMBER_COLUMNS = ['Mobile1', 'AccountNumber'] as const;

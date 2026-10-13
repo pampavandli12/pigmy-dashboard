@@ -27,6 +27,7 @@ import {
   updateUserPhoneNumber,
   uploadBanksoftAccounts,
   uploadPeocitAccounts,
+  uploadSledgerAccounts,
 } from '../../src/services/account';
 import { API_URLS } from '../../src/utils/constants';
 
@@ -62,6 +63,18 @@ describe('account service', () => {
     expect(apiMock.post).toHaveBeenLastCalledWith(
       API_URLS.UPLOAD_ACCOUNTS.peocit,
       peocitPayload,
+    );
+
+    const sledgerPayload = {
+      agentCode: 1,
+      bankCode: 'BANK1',
+      branchCode: '001',
+      users: [],
+    };
+    await expect(uploadSledgerAccounts(sledgerPayload)).resolves.toBe('post-data');
+    expect(apiMock.post).toHaveBeenLastCalledWith(
+      API_URLS.UPLOAD_ACCOUNTS.sledger,
+      sledgerPayload,
     );
 
     const updatePayload = {

@@ -56,3 +56,7 @@ export const requireNumber = (
 /** Trim a possibly-undefined column value. */
 export const trimColumn = (value: string | undefined): string =>
   (value ?? '').trim();
+
+/** Convert a dotted date (19.08.26) to the dashed format (19-08-26) the backend expects. */
+export const toDashDate = (value: string | undefined): string =>
+  trimColumn(value).replace(/\./g, '-');

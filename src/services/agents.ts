@@ -2,6 +2,7 @@ import type {
   CreateDepositPayload,
   CreateDepositResponse,
   CreatePeocitDepositResponse,
+  CreateSledgerDepositResponse,
   PastDepositPayload,
   TransactionsResponse,
 } from '../types/Agent';
@@ -92,6 +93,15 @@ export const createPeocitDeposit = async (
   payload: CreateDepositPayload,
 ): Promise<CreatePeocitDepositResponse> => {
   const response = await api.post(API_URLS.CREATE_DEPOSIT.peocit, {
+    ...payload,
+  });
+  return response.data;
+};
+
+export const createSledgerDeposit = async (
+  payload: CreateDepositPayload,
+): Promise<CreateSledgerDepositResponse> => {
+  const response = await api.post(API_URLS.CREATE_DEPOSIT.sledger, {
     ...payload,
   });
   return response.data;

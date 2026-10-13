@@ -2,6 +2,7 @@ import type {
   AccountsResponse,
   AccountUpdatePayload,
   UploadPeocitAccountPayload,
+  UploadSledgerAccountPayload,
   UploadUserAccountPayload,
 } from '../types/Accounts';
 import { API_URLS } from '../utils/constants';
@@ -20,6 +21,13 @@ export const uploadPeocitAccounts = async (
   accountData: UploadPeocitAccountPayload,
 ): Promise<unknown> => {
   const response = await api.post(API_URLS.UPLOAD_ACCOUNTS.peocit, accountData);
+  return response.data;
+};
+
+export const uploadSledgerAccounts = async (
+  accountData: UploadSledgerAccountPayload,
+): Promise<unknown> => {
+  const response = await api.post(API_URLS.UPLOAD_ACCOUNTS.sledger, accountData);
   return response.data;
 };
 

@@ -40,6 +40,19 @@ export type UploadPeocitAccountPayload = {
   }>;
 };
 
+export type UploadSledgerAccountPayload = {
+  agentCode: number;
+  bankCode: string;
+  branchCode: string;
+  users: Array<{
+    schemeId: string;
+    customerName: string;
+    accountNumber: string;
+    currentBalance: number;
+    lastDepositDate: string;
+  }>;
+};
+
 export type ParsedPhoneNumberRow = {
   accountNumber: number;
   mobilenumber: number;

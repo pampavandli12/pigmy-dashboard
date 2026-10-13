@@ -7,14 +7,11 @@ import { buildCreateDepositPayload } from './depositPayload';
 import {
   requireNumber,
   splitAccountsFile,
+  toDashDate,
   toNumber,
   trimColumn,
 } from './parseUtils';
 import type { BankTypeHandler, UploadAccountsInput } from './types';
-
-// The peocit file uses dotted dates (19.08.26); the backend expects dashes (19-08-26).
-const toDashDate = (value: string | undefined): string =>
-  trimColumn(value).replace(/\./g, '-');
 
 const buildUploadAccountsPayload = ({
   fileContent,

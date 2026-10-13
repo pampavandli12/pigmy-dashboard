@@ -26,6 +26,7 @@ import {
   createAgent,
   createBanksoftDeposit,
   createPeocitDeposit,
+  createSledgerDeposit,
   deleteTransaction,
   exportDepositById,
   fetchAgentByCode,
@@ -118,6 +119,11 @@ describe('agents service', () => {
       { ...depositPayload },
     );
 
+    await expect(createSledgerDeposit(depositPayload)).resolves.toBe('post-data');
+    expect(apiMock.post).toHaveBeenLastCalledWith(
+      API_URLS.CREATE_DEPOSIT.sledger,
+      { ...depositPayload },
+    );
 
     await expect(
       fetchPastDeposits({

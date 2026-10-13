@@ -65,3 +65,20 @@ export interface CreatePeocitDepositResponse {
   depositedDate: string;
   users: PeocitDepositCollection[];
 }
+
+export interface SledgerDepositCollection {
+  branchCode: string;
+  schemeId: string;
+  accountNumber: string;
+  customerName: string;
+  collectedAmount: number;
+  collectedDate: string;
+}
+
+export interface CreateSledgerDepositResponse {
+  agentCode: number;
+  bankCode: string;
+  totalDepositedAmount: number;
+  depositedDate: string;
+  users: SledgerDepositCollection[];
+}

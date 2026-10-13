@@ -4,10 +4,14 @@ import { MOCK_DEPOSIT_RESPONSE } from '../fixtures/deposits';
 import {
   generateDepositDatFile,
   generatePeocitDepositDatFile,
+  generateSledgerDepositDatFile,
   mapAccountsToAgents,
   parseCSVFile,
 } from '../../src/utils/helpers';
-import type { CreatePeocitDepositResponse } from '../../src/types/Agent';
+import type {
+  CreatePeocitDepositResponse,
+  CreateSledgerDepositResponse,
+} from '../../src/types/Agent';
 
 class FileReaderMock {
   onerror: (() => void) | null = null;
@@ -184,6 +188,67 @@ describe('helpers', () => {
       ].join('\r\n') + '\r\n',
     );
     expect(link).toMatchObject({ href: 'blob:peocit', download: 'pcrx.dat' });
+    expect(click).toHaveBeenCalled();
+  });
+
+  it('builds the sledger deposit DAT download with the shared fixed-width layout', () => {
+    const click = vi.fn();
+    const link = { click, href: '', download: '' };
+    const appendChild = vi.fn();
+    const removeChild = vi.fn();
+    const createObjectURL = vi.fn(() => 'blob:sledger');
+    const revokeObjectURL = vi.fn();
+    const blobParts: string[] = [];
+
+    vi.stubGlobal('document', {
+      body: { appendChild, removeChild },
+      createElement: vi.fn(() => link),
+    });
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    vi.stubGlobal(
+      'Blob',
+      vi.fn(function BlobMock(parts: string[]) {
+        blobParts.push(...parts);
+        return { parts };
+      }),
+    );
+
+    const response: CreateSledgerDepositResponse = {
+      agentCode: 1,
+      bankCode: 'SLD123',
+      totalDepositedAmount: 52650,
+      depositedDate: '28.09.26',
+      users: [
+        {
+          branchCode: '001',
+          schemeId: 'PD001',
+          accountNumber: 'DEPPD001144',
+          customerName: 'MALINGARAYA',
+          collectedAmount: 1000,
+          collectedDate: '25.09.26',
+        },
+        {
+          branchCode: '001',
+          schemeId: 'PD001',
+          accountNumber: 'DEPPD001106',
+          // Exactly fills the 20-char field, no truncation or padding needed.
+          customerName: 'T. HAMPANAGOUDA PATI',
+          collectedAmount: 200,
+          collectedDate: '25.09.26',
+        },
+      ],
+    };
+
+    generateSledgerDepositDatFile(response);
+
+    expect(blobParts[0]).toBe(
+      [
+        '000,12345,         0052650.00,               00002,0000000001,28.09.26,12345',
+        '001,PD001,DEPPD001144        ,MALINGARAYA         ,0001000.00,25.09.26,00001',
+        '001,PD001,DEPPD001106        ,T. HAMPANAGOUDA PATI,0000200.00,25.09.26,00002',
+      ].join('\n'),
+    );
+    expect(link).toMatchObject({ href: 'blob:sledger', download: 'pcrx.dat' });
     expect(click).toHaveBeenCalled();
   });
 
