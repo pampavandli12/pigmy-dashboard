@@ -160,6 +160,7 @@ describe('helpers', () => {
       bankCode: 'PEO123',
       totalDepositedAmount: 24950,
       depositedDate: '19.08.26',
+      vpncode: ' 80292',
       users: [
         {
           schemeAccntNumber: '380291',
@@ -182,7 +183,7 @@ describe('helpers', () => {
 
     expect(blobParts[0]).toBe(
       [
-        '      ,000002,024950          ,001001,19.08.26,12341234',
+        ' 80292,000002,024950          ,001001,19.08.26,12341234',
         '380291,002500,GULABI P        ,015000,18.08.26,002500  ',
         '380260,004000,RANJIT RAJ P N  ,012450,18.08.26,004000  ',
       ].join('\r\n') + '\r\n',

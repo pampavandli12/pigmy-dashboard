@@ -63,6 +63,7 @@ export interface CreatePeocitDepositResponse {
   bankCode: string;
   totalDepositedAmount: number;
   depositedDate: string;
+  vpncode: string;
   users: PeocitDepositCollection[];
 }
 

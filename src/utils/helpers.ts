@@ -127,7 +127,7 @@ export const generatePeocitDepositDatFile = (
   const lines: string[] = [];
 
   const agentInformationRow = [
-    ' '.repeat(6),
+    formatColumn(depositData.vpncode, 6),
     formatZeroPaddedNumberColumn(depositData.users.length, 6),
     formatColumn(
       formatZeroPaddedNumberColumn(depositData.totalDepositedAmount, 6),
