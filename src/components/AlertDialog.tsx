@@ -4,7 +4,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 type AlertDialogProps = {
   open: boolean;
@@ -22,25 +22,14 @@ function AlertDialog({
   handleConfirm,
 }: AlertDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const isMountedRef = useRef(true);
-
-  useEffect(
-    () => () => {
-      isMountedRef.current = false;
-    },
-    [],
-  );
 
   const confirmAndClose = async () => {
     setIsLoading(true);
     try {
       await handleConfirm();
     } finally {
-      // `handleConfirm` often unmounts this dialog; guard the state update.
-      if (isMountedRef.current) {
-        setIsLoading(false);
-        handleClose();
-      }
+      setIsLoading(false);
+      handleClose();
     }
   };
 
